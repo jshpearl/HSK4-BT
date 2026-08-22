@@ -1,16 +1,17 @@
 import streamlit as st
 import requests
-import json
 import os
 
-# --- CẤU HÌNH TRANG WEB & PHONG CÁCH TỐI GIẢN ---
+# --- CẤU HÌNH TRANG WEB ---
 st.set_page_config(
     page_title="BÀI TẬP BÀI 16 (HSK4)",
     page_icon="📚",
     layout="wide"
 )
 
-# CSS ép toàn bộ chữ thành màu đen đậm tuyệt đối (#000000), đơn giản hóa giao diện
+# --- CSS PHONG CÁCH ĐƠN GIẢN, CHỮ ĐEN ĐẬM TUYỆT ĐỐI ---
+# Ép toàn bộ màu chữ của mọi thành phần trên trang thành màu đen (#000000)
+# Sử dụng nét phân cách đứt đơn giản thay vì các khung nền phức tạp
 st.markdown("""
 <style>
     /* Nền trang xanh pastel dịu nhẹ */
@@ -18,23 +19,28 @@ st.markdown("""
         background-color: #F4F9F4 !important;
     }
     
-    /* Ép tất cả các văn bản, nhãn, lựa chọn sang màu đen đậm nguyên bản */
-    html, body, [data-testid="stAppViewContainer"], .stApp, p, span, label, li, h1, h2, h3, h4, h5, h6, input, select, textarea, button,
+    /* Ép tất cả các văn bản, tiêu đề, nhãn widget, lựa chọn sang màu đen đậm nguyên bản */
+    *, p, span, label, h1, h2, h3, h4, h5, h6, li, option, select, input, button, div,
     .stMarkdown, .stWidgetLabel, .stMarkdownContainer p,
     div[data-testid="stMarkdownContainer"] p,
     div[role="radiogroup"] label, div[role="radiogroup"] p,
-    div[data-testid="stNotification"] p, div[data-testid="stNotification"] div,
-    .stSelectbox div[data-baseweb="select"] span {
+    div[data-testid="stNotification"] p, div[data-testid="stNotification"] div {
         color: #000000 !important;
-        font-weight: bold !important;
+        font-weight: 700 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
     }
 
-    /* Phong cách đơn giản, loại bỏ viền khung phức tạp */
+    /* Phong cách tối giản: phân cách câu hỏi bằng nét đứt mỏng màu xanh nhạt */
     .question-card {
-        padding: 10px 0px;
-        margin-bottom: 20px;
+        padding: 15px 0px;
         border-bottom: 1px dashed #C8E6C9;
+        margin-bottom: 15px;
+    }
+    
+    /* Ẩn hoàn toàn các nút hệ thống góc trên bên phải để tối giản giao diện */
+    header, [data-testid="stDecoration"], [data-testid="stStatusWidget"] {
+        display: none !important;
+        visibility: hidden !important;
     }
     
     /* Chân trang của giáo viên */
@@ -42,30 +48,8 @@ st.markdown("""
         text-align: center;
         padding: 25px 10px 10px 10px;
         font-size: 18px;
-        color: #000000 !important;
-        font-weight: bold !important;
-        border-top: 1px solid #C8E6C9;
+        border-top: 1px dashed #C8E6C9;
         margin-top: 40px;
-    }
-
-    /* Ẩn hoàn toàn các ký hiệu, menu và nút Deploy ở góc trên bên phải */
-    header {
-        visibility: hidden !important;
-    }
-    #MainMenu {
-        visibility: hidden !important;
-    }
-    footer {
-        visibility: hidden !important;
-    }
-    .stAppDeployButton {
-        display: none !important;
-    }
-    div[data-testid="stDecoration"] {
-        display: none !important;
-    }
-    div[data-testid="stStatusWidget"] {
-        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -84,8 +68,8 @@ def send_score_to_sheets(student_name, section_name, score):
     except:
         pass
 
-# --- HÀM PHÁT FILE NGHE AN TOÀN TRÊN STREAMLIT ---
-# Tránh lỗi "Audio source error" bằng cách đọc trực tiếp dữ liệu nhị phân (binary) của tệp tin từ GitHub khi chạy ứng dụng
+# --- HÀM PHÁT FILE NGHE AN TOÀN TUYỆT ĐỐI (KHÔNG CƠ HỘI GÂY CRASH TRANG) ---
+# Kiểm tra sự tồn tại của file trước khi phát, nếu không có thì hiện thông báo hướng dẫn gọn gàng chứ không crash.
 def play_audio(file_path):
     if os.path.exists(file_path):
         try:
@@ -93,16 +77,17 @@ def play_audio(file_path):
                 audio_bytes = f.read()
             st.audio(audio_bytes, format="audio/mp3")
         except Exception as e:
-            st.audio(file_path, format="audio/mp3")
+            st.warning(f"⚠️ Có lỗi khi đọc tệp âm thanh cục bộ: {e}")
     else:
-        # Nếu không tìm thấy file local (ví dụ khi test), chạy bằng đường dẫn chuỗi dự phòng
-        st.audio(file_path, format="audio/mp3")
+        st.error(f"⚠️ Không tìm thấy tệp nghe tại đường dẫn: `{file_path}`. "
+                 f"Bạn hãy chắc chắn đã tải thư mục `audio` chứa các tệp nghe lên đúng thư mục gốc của GitHub Repository của bạn.")
 
+# Đường dẫn file nghe cục bộ
 AUDIO_16_1 = "audio/16-1.mp3"
 AUDIO_16_2 = "audio/16-2.mp3"
 AUDIO_16_3 = "audio/16-3.mp3"
 
-# Khởi tạo trạng thái để tránh mất kết quả khi học viên chuyển đổi qua lại giữa các Tab
+# Khởi tạo trạng thái làm bài của học sinh
 if 'listening_submitted' not in st.session_state:
     st.session_state.listening_submitted = False
 if 'reading_submitted' not in st.session_state:
@@ -233,12 +218,11 @@ with tab_listening:
             st.session_state.listening_score = f"{correct_cnt}/22"
             
             st.success("🎉 Chúc mừng bạn đã làm xong bài tập nha")
-            st.info(f"Điểm số của bạn là: {st.session_state.listening_score}.")
+            st.info(f"📊 Điểm số của bạn là: {st.session_state.listening_score}.")
             
-            # Gửi kết quả về Google Sheets của giáo viên
+            # Gửi kết quả về Google Sheets
             send_score_to_sheets(student_name, "Phần Nghe", st.session_state.listening_score)
 
-    # Hiển thị đáp án chi tiết khi học viên bấm nộp bài
     if st.session_state.listening_submitted:
         st.markdown("### 🔍 CHI TIẾT BÀI LÀM & ĐÁP ÁN:")
         st.markdown("#### **Phần 1:**")
@@ -254,7 +238,7 @@ with tab_listening:
 (Tôi cũng không rõ cần chuẩn bị giấy tờ gì để làm visa, nhưng tôi có số điện thoại của Đại sứ quán, để tôi hỏi giúp bạn.)
 
 **Giải thích:** Đề bài bảo "Anh ấy biết cách làm visa" -> Sai (✘).""",
-                        """**Script:** 只有通过了考试，完全符合要求后，护士才能正式开始工作。医院对护士这一职业的要求 is: 专业、负责、尊重生命。
+                        """**Script:** 只有通过了考试，完全符合要求后，护士才能正式开始工作。医院对护士这一职业的要求是：专业、负责、尊重生命。
 (Chỉ sau khi vượt qua kỳ thi và hoàn toàn đáp ứng yêu cầu, y tá mới có thể chính thức bắt đầu làm việc. Yêu cầu của bệnh viện đối với nghề y tá là: chuyên nghiệp, trách nhiệm và tôn trọng sinh mệnh.)
 
 **Giải thích:** Đề bài bảo "Y tá phải thi trước khi làm việc" -> Đúng (✔).""",
@@ -306,7 +290,7 @@ with tab_listening:
 
 **Giải thích:** Lựa chọn đúng là B (填表格 - Điền biểu mẫu) vì người nữ yêu cầu điền tờ khảo sát dịch vụ khách sạn.""",
                         """**Script:**
-女：小刘，帮我把公司的这两页材料传真给李记者，他下周的一篇新闻里要用 these numbers。
+女：小刘，帮我把公司的这两页材料传真给李记者，他下周的一篇新闻里要用这些数字。
 男：好，我马上去。他的传真号码是多少？
 问：对话最可能发生在哪儿？
 
@@ -344,7 +328,7 @@ with tab_listening:
 女：这是女儿专门给我们画的。
 男：这张画儿的景色实在太漂亮了！你看，花草画得像真的一样。
 女：我想把它挂起来，天天看。
-男：好主意，就挂在书房的墙上吧。
+男：好主意, 就挂在书房的墙上吧。
 问：男的想把画儿挂在哪儿？
 
 **Giải thích:** Lựa chọn đúng là B (书房 - Phòng đọc sách).""",
@@ -438,7 +422,7 @@ with tab_reading:
     
     q27_30_texts = [
         "27. A：我那件红衬衫呢？你放哪儿了？\n    B：洗了，在外边（ ）着，还没干呢。你穿这件就很好，很精神。",
-        "28. A：去植物园玩儿的同事一共是十二位，现在还有人要（ ）吗？\n    B：我也想去。明天 chúng ta 大概去多长时间？几点能回来呢？",
+        "28. A：去植物园玩儿的同事一共是十二位，现在还有人要（ ）吗？\n    B：我也想去。明天我们大概去多长时间？几点能回来呢？",
         "29. A：外面雪下得这么大，那些小伙子们怎么都跑外边去了？\n    B：他们都是南方人，南方冬天很少下雪，更不用说这么大的雪，所以他们肯定特别（ ）。",
         "30. A：现在城市里越来越多的人喜欢到（ ）过周末了。\n    B：是啊，那里空气新鲜、环境安静，可以让人好好放松一下。"
     ]
@@ -460,7 +444,7 @@ with tab_reading:
     q31_34_texts = [
         "**31.**\nA 因此，预习是学习的第一步\nB 上课的时候，学习效果才会更好\nC 提前对要学的内容有个大概的了解",
         "**32.**\nA 结果眼睛越来越不好\nB 所以现在我不敢再躺着看书了\nC 拿我来说，小时候我总喜欢躺在床上看书",
-        "**33.**\nA 我们还是把它推 to 里面去吧\nB 沙发太大了，放这儿容易堵着门，进出不方便\nC 把这个地方空出来",
+        "**33.**\nA 我们还是把它推到里面去吧\nB 沙发太大了，放这儿容易堵着门，进出不方便\nC 把这个地方空出来",
         "**34.**\nA 也许你会发现，这些事情其实用不着烦恼\nB 每次发脾气前，请先给自己几分钟\nC 冷静地想一想，是不是值得为此生气"
     ]
     q31_34_ans = ["CBA", "CAB", "BAC", "BCA"]
@@ -484,7 +468,7 @@ with tab_reading:
         "39. 耳朵每天都帮助我们听到各种各样的声音，但我们可不像重视眼睛、鼻子那样重视它。很多时候人们常常感觉不到它，甚至忘记了它。其实我们都错了，有研究发现，通过耳朵可以看出一个人是不是健康，甚至是什么样的性格。\n★ 这段话主要讲：",
         "**** “我找林医生，我有急事！”一位妈妈非常着急地给林医生打电话，林医生的妻子接的电话... “我的小儿子刚才把我的手表吃到肚子里了，林医生什么时候能回来？”“两个小时左右。”... “这段时间我该怎么办呀？”“我很抱歉，您恐怕只能先用另一块儿手表了。”\n\n40. ★ 孩子怎么了？",
         "41. ★ 关于林医生，可以知道什么？",
-        "**** 父母是孩子第一位老师，auch 是最重要的老师。父母不仅要帮助孩子认识世界，教会他们知识，还应该帮助孩子养成好的生活习惯... 比如睡前刷牙、节约用水... \n\n42. ★ 根据这段话，父母有什么责任？",
+        "**** 父母是孩子第一位老师，也是最重要的老师。父母不仅要帮助孩子认识世界，教会他们知识，还应该帮助孩子养成好的生活习惯... 比如睡前刷牙、节约用水... \n\n42. ★ 根据这段话，父母有什么责任？",
         "43. ★ 根据这段话，孩子习惯的养成："
     ]
     
@@ -496,7 +480,7 @@ with tab_reading:
         ["A. 有趣的鼻子", "B. 怎样保护眼睛", "C. 重新认识耳朵", "D. 怎样打扮自己"],
         ["A. 很想买手表", "B. 突然流血了", "C. 把药吃错了", "D. 把手表吃了"],
         ["A. 不在家", "B. 很伤心", "C. 表丢了", "D. 不负责"],
-        ["A. 保护孩子安全", "B. 教育孩子", "C. 回答问题", "D. 替孩子做决定"],
+        ["A. 保护孩子安全", "B. 教育孩子", "C. 回答问题", "D. 替孩子做 quyết định"],
         ["A. 过程会很慢", "B. 会比较轻松", "C. 与年龄有关", "D. 受父母影响"]
     ]
     q35_43_ans = ["C", "D", "D", "C", "C", "D", "A", "B", "D"]
@@ -531,7 +515,7 @@ with tab_reading:
             st.session_state.reading_score = f"{correct_cnt}/21"
             
             st.success("🎉 Chúc mừng bạn đã làm xong bài tập nha")
-            st.info(f"Điểm số của bạn là: {st.session_state.reading_score}.")
+            st.info(f"📊 Điểm số của bạn là: {st.session_state.reading_score}.")
             
             # Gửi kết quả về Google Sheets
             send_score_to_sheets(student_name, "Phần Đọc", st.session_state.reading_score)
@@ -598,7 +582,7 @@ with tab_writing:
     
     st.markdown("""
     <div class='question-card'>
-        <strong>Câu 49:</strong> (Hình ảnh một chàng trai đang chơi bóng rổ)<br>
+        <strong>Câu 49:</strong> (Hình ảnh một tiểu soái ca/chàng trai đang chơi bóng rổ)<br>
         Từ gợi ý: <strong>小伙子</strong>
     </div>
     """, unsafe_allow_html=True)
@@ -632,7 +616,7 @@ with tab_writing:
             st.session_state.writing_score = f"{correct_cnt}/5"
             
             st.success("🎉 Chúc mừng bạn đã làm xong bài tập nha")
-            st.info(f"Điểm số của bạn là: {st.session_state.writing_score} (Chỉ tính điểm tự động phần Sắp xếp câu).")
+            st.info(f"📊 Điểm số của bạn là: {st.session_state.writing_score} (Chỉ tính điểm tự động phần Sắp xếp câu).")
             
             # Gửi kết quả về Google Sheets
             send_score_to_sheets(student_name, "Phần Viết", st.session_state.writing_score)
