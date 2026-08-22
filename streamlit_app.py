@@ -193,7 +193,10 @@ GSHEET_URL = "https://script.google.com/macros/s/AKfycbz6WgZDlQu62GARrZ5aB7KyTaO
 def send_results_to_gsheet(student_name, section_name, score_str):
     payload = {
         "name": student_name,
-        "lesson": "BÀI TẬP BÀI 16 (HSK4)",
+        "lesson": f"BÀI TẬP BÀI 16 (HSK4) - {section_name}",
+        "code": f"BÀI TẬP BÀI 16 (HSK4) - {section_name}",
+        "mabode": f"BÀI TẬP BÀI 16 (HSK4) - {section_name}",
+        "ma_bo_de": f"BÀI TẬP BÀI 16 (HSK4) - {section_name}",
         "section": section_name,
         "score": score_str
     }
