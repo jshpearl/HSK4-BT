@@ -88,6 +88,21 @@ st.markdown("""
         border-top: 1px solid #E1ECE5;
         margin-top: 50px;
     }
+
+    /* Định dạng khung sổ ra (st.expander) màu trắng nền, chữ đen hẳn */
+    div[data-testid="stExpander"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E1ECE5 !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stExpander"] * {
+        color: #000000 !important;
+    }
+    div[data-testid="stExpander"] p, div[data-testid="stExpander"] span, div[data-testid="stExpander"] summary, div[data-testid="stExpander"] strong {
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 
