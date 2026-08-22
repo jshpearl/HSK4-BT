@@ -14,12 +14,12 @@ st.set_page_config(
 # Chữ màu đen xám (không quá đậm để đỡ chói mắt), font chữ mềm mại, dễ nhìn và nổi lên so với nền
 st.markdown("""
 <style>
-    /* Nền trang xanh pastel dịu nhẹ lai trắng */
+    /* 1. Nền trang xanh pastel dịu nhẹ lai trắng */
     .stApp {
         background-color: #F4F8F5 !important;
     }
     
-    /* Ép toàn bộ phông chữ sang màu đen xám rõ nét, mềm mại, nổi trên nền */
+    /* 2. Ép toàn bộ phông chữ sang màu đen xám rõ nét, nổi trên nền */
     html, body, p, span, label, li, h1, h2, h3, h4, h5, h6, 
     .stMarkdown, .stWidgetLabel, .stMarkdownContainer p,
     div[data-testid="stMarkdownContainer"] p,
@@ -29,11 +29,11 @@ st.markdown("""
     .st-emotion-cache-zt5g90, .st-emotion-cache-1kyx60b, .st-emotion-cache-1629630 {
         color: #333333 !important;
         font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
-        font-weight: 500 !important;
-        text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.08) !important;
+        font-weight: 600 !important;
+        text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* Tiêu đề chính lớn nổi bật */
+    /* 3. Tiêu đề chính lớn nổi bật */
     h1 {
         color: #2E5A44 !important;
         font-weight: 700 !important;
@@ -55,9 +55,105 @@ st.markdown("""
         background-color: #FFFFFF !important;
         padding: 20px;
         border-radius: 12px;
-        border: 1px solid #E1ECE5;
+        border: 1px solid #E1ECE5 !important;
         margin-bottom: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02) !important;
+    }
+
+    /* 4. Sửa lỗi khung đen mất chữ (Force Light Mode cho các widgets) */
+    
+    /* Ô lựa chọn (Selectbox / Dropdown) */
+    div[data-baseweb="select"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E1ECE5 !important;
+        border-radius: 8px !important;
+    }
+    div[data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        color: #333333 !important;
+    }
+    div[data-baseweb="select"] span {
+        color: #333333 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Danh sách tùy chọn khi mở Dropdown */
+    ul[role="listbox"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E1ECE5 !important;
+    }
+    ul[role="listbox"] li {
+        background-color: #FFFFFF !important;
+        color: #333333 !important;
+    }
+    ul[role="listbox"] li:hover {
+        background-color: #F1F8F4 !important;
+        color: #2E5A44 !important;
+    }
+
+    /* Ô nhập văn bản (Text Input & Text Area) */
+    div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
+        background-color: #FFFFFF !important;
+        color: #333333 !important;
+        border: 1px solid #E1ECE5 !important;
+        border-radius: 8px !important;
+    }
+
+    /* Khung code chứa từ vựng gợi ý ở trên đầu bài đọc */
+    div[data-testid="stCodeBlock"], code, pre {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E1ECE5 !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stCodeBlock"] pre {
+        background-color: #FFFFFF !important;
+        border: none !important;
+        padding: 10px !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stCodeBlock"] code, code, pre {
+        background-color: #FFFFFF !important;
+        color: #333333 !important;
+        font-family: 'Segoe UI', sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+    }
+
+    /* 5. Cải tạo Khung xổ ra (st.expander) nền trắng chữ đen tuyền */
+    div[data-testid="stExpander"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #E1ECE5 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    }
+    div[data-testid="stExpander"] details summary {
+        background-color: #FFFFFF !important;
+        color: #333333 !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stExpander"] details > div {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border-top: 1px solid #F1F8F4 !important;
+        padding: 15px !important;
+    }
+    /* Chữ bên trong Khung xổ ra bắt buộc đen tuyền */
+    div[data-testid="stExpander"] p, 
+    div[data-testid="stExpander"] span, 
+    div[data-testid="stExpander"] strong,
+    div[data-testid="stExpander"] div {
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Định dạng Tabs */
+    button[data-baseweb="tab"] {
+        color: #555555 !important;
+        font-weight: 600 !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #2E5A44 !important;
+        border-bottom-color: #2E5A44 !important;
     }
     
     /* Ẩn hoàn toàn các ký hiệu, menu và nút Deploy góc trên bên phải */
@@ -88,21 +184,6 @@ st.markdown("""
         border-top: 1px solid #E1ECE5;
         margin-top: 50px;
     }
-
-    /* Định dạng khung sổ ra (st.expander) màu trắng nền, chữ đen hẳn */
-    div[data-testid="stExpander"] {
-        background-color: #FFFFFF !important;
-        border: 1px solid #E1ECE5 !important;
-        border-radius: 8px !important;
-    }
-    div[data-testid="stExpander"] * {
-        color: #000000 !important;
-    }
-    div[data-testid="stExpander"] p, div[data-testid="stExpander"] span, div[data-testid="stExpander"] summary, div[data-testid="stExpander"] strong {
-        color: #000000 !important;
-        font-weight: 600 !important;
-    }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -123,19 +204,59 @@ def send_results_to_gsheet(student_name, section_name, score_str):
 
 # --- HÀM PHÁT FILE NGHE AN TOÀN ---
 # Cấu hình đọc đường dẫn tương đối để tải lên cùng thư mục trên Github
-AUDIO_16_1 = "audio/16-1.mp3"
-AUDIO_16_2 = "audio/16-2.mp3"
-AUDIO_16_3 = "audio/16-3.mp3"
+AUDIO_16_1 = "16-1"
+AUDIO_16_2 = "16-2"
+AUDIO_16_3 = "16-3"
 
-def play_audio(file_path):
-    if os.path.exists(file_path):
+# --- HÀM TỰ ĐỘNG TÌM KIẾM VÀ PHÁT FILE NGHE THÔNG MINH (CHỐNG LỖI) ---
+def find_audio_file(filename_patt):
+    import os
+    # 1. Tìm các folder phổ biến và ghép thử trực tiếp
+    for folder in ["audio", "Audio", "AUDIO", "assets", "sound", "sounds", ""]:
+        for ext in [".mp3", ".MP3", ".wav", ".WAV", ".m4a", ".M4A"]:
+            p = os.path.join(folder, filename_patt + ext) if folder else filename_patt + ext
+            if os.path.exists(p):
+                return p
+                
+    # 2. Tìm kiếm đệ quy toàn bộ thư mục dự án
+    for root, dirs, files in os.walk("."):
+        if any(x in root for x in [".git", ".venv", "__pycache__", ".streamlit"]):
+            continue
+        for f in files:
+            name, ext = os.path.splitext(f)
+            if filename_patt.lower() in f.lower() and ext.lower() in [".mp3", ".wav", ".m4a"]:
+                return os.path.join(root, f)
+    return None
+
+def play_audio(filename_patt):
+    import os
+    found_path = find_audio_file(filename_patt)
+    if found_path:
         try:
-            with open(file_path, "rb") as f:
+            with open(found_path, "rb") as f:
                 st.audio(f.read(), format="audio/mp3")
-        except:
-            st.warning("⚠️ Không thể giải mã tệp âm thanh cục bộ.")
+        except Exception as e:
+            st.error(f"⚠️ Lỗi giải mã tệp âm thanh '{found_path}': {str(e)}")
     else:
-        st.warning(f"🎧 Trình phát: Đang tìm kiếm tệp âm thanh tại '{file_path}' trong thư mục dự án của bạn trên GitHub.")
+        st.warning(f"🎧 Trình phát: Chưa tìm thấy tệp âm thanh chứa kí hiệu '{filename_patt}' trong thư mục dự án của bạn trên GitHub.")
+        st.markdown("Vui lòng tải thư mục `audio/` chứa các tệp `16-1.mp3`, `16-2.mp3`, `16-3.mp3` lên GitHub của bạn nhé!")
+        
+        # In ra cấu trúc thư mục file nhạc hiện tại để gỡ lỗi trực quan
+        try:
+            audio_files = []
+            for root, dirs, files in os.walk("."):
+                if any(x in root for x in [".git", ".venv", "__pycache__", ".streamlit"]):
+                    continue
+                for f in files:
+                    if f.lower().endswith((".mp3", ".wav", ".m4a", ".mp4")):
+                        audio_files.append(os.path.join(root, f))
+            if audio_files:
+                st.markdown("**Các tệp âm thanh hiện có trong dự án của bạn:**")
+                st.code("\n".join(audio_files))
+            else:
+                st.markdown("**Không tìm thấy bất kỳ tệp âm thanh nào (.mp3, .wav, .m4a) trong thư mục dự án hiện tại.**")
+        except:
+            pass
 
 # --- KHỞI TẠO STATE ĐỂ TRÁNH MẤT DỮ LIỆU KHI CHUYỂN TAB ---
 if 'listening_submitted' not in st.session_state:
