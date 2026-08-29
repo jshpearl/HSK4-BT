@@ -383,8 +383,8 @@ def show_lesson_16(student_name):
             target_col = col1 if i < 2 else col2
             with target_col:
                 st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
-                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn", "A", "B", "C", "D", "E"], key=f"l16_read_p1_1_{i}")
-                user_q23_26.append(ans)
+                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn", "A. 冷静", "B. 尊重", "C. 敢", "D. 坚持", "E. 呀"], key=f"l16_read_p1_1_{i}")
+                user_q23_26.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
                 st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("**第 27-30 题：**")
@@ -401,8 +401,8 @@ def show_lesson_16(student_name):
             target_col = col1 if i < 2 else col2
             with target_col:
                 st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
-                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn", "A", "B", "C", "D", "E"], key=f"l16_read_p1_2_{i}")
-                user_q27_30.append(ans)
+                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn", "A. 激动", "B. 挂", "C. 温度", "D. 报名", "E. 郊区"], key=f"l16_read_p1_2_{i}")
+                user_q27_30.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
                 st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("---")
@@ -690,8 +690,8 @@ def show_lesson_17(student_name):
             target_col = col1 if i < 2 else col2
             with target_col:
                 st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
-                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn", "A", "B", "C", "D", "E"], key=f"l17_read_p1_1_{i}")
-                user_q23_26.append(ans)
+                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn", "A. 严格", "B. 梦", "C. 抱", "D. 坚持", "E. 入口"], key=f"l17_read_p1_1_{i}")
+                user_q23_26.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
                 st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("**第 27-30 题：**")
@@ -708,8 +708,8 @@ def show_lesson_17(student_name):
             target_col = col1 if i < 2 else col2
             with target_col:
                 st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
-                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn", "A", "B", "C", "D", "E"], key=f"l17_read_p1_2_{i}")
-                user_q27_30.append(ans)
+                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn", "A. 剩", "B. 趟", "C. 干 (gàn)", "D. 温度", "E. 照"], key=f"l17_read_p1_2_{i}")
+                user_q27_30.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
                 st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown("---")
