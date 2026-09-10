@@ -1243,10 +1243,9 @@ def show_lesson_18(student_name):
 # Bộ máy Streamlit sẽ tự động hiển thị bài học mới nhất lên đầu tiên trong ô chọn bài tập!
 
 LESSONS = {
+    "Bài 18: 科技与世界": show_lesson_18,
     "Bài 17: 人与自然": show_lesson_17,
     "Bài 16: 生活可以更美好": show_lesson_16,
-    # Thêm bài học mới trong tương lai tại đây, ví dụ:
-    # "Bài 18: 科技与世界": show_lesson_18,
 }
 
 # Tiêu đề bài học
