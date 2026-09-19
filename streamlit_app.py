@@ -18,7 +18,7 @@ st.markdown("""
         background-color: #F3F7F4 !important;
     }
     
-    /* 2. Ép toàn bộ phông chữ sang màu đen xám / xám đậm sắc nét, chống tàng hình chữ */
+    /* 2. Ép toàn bộ phông chữ sang màu đen xám / xám đậm sắc nét, chống tàng hình chữ khi bật Dark Mode */
     html, body, p, span, label, li, h1, h2, h3, h4, h5, h6, 
     .stMarkdown, .stWidgetLabel, .stMarkdownContainer p,
     div[data-testid="stMarkdownContainer"] p,
@@ -148,33 +148,95 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 6. DÀN HÀNG NGANG CHỌN BÀI HỌC (Pills / Radio / Tabs Level 1) */
-    div[data-testid="stPills"] {
+    /* 6. CHỌN BÀI HỌC (Pills / SegmentedControl / Radio / Tabs) */
+
+    /* Khung chứa các nút chọn bài */
+    div[data-testid="stPills"],
+    div[data-testid="stSegmentedControl"],
+    div[data-testid="stRadio"] div[role="radiogroup"] {
         gap: 10px !important;
-        background-color: #E2EDE6 !important;
-        padding: 8px !important;
-        border-radius: 16px !important;
-        border: 1px solid #C8DCD2 !important;
+        background-color: transparent !important;
+        padding: 4px 0px !important;
+        border: none !important;
         display: flex !important;
         flex-wrap: wrap !important;
         justify-content: center !important;
     }
-    div[data-testid="stPills"] button {
-        background-color: #FFFFFF !important;
-        color: #275338 !important;
-        font-weight: 700 !important;
-        border-radius: 12px !important;
-        border: 1px solid #D5E4DC !important;
-        padding: 10px 20px !important;
+
+    /* --- NÚT BÀI CHƯA CHỌN (UNSELECTED TABS / PILLS) --- */
+    /* Nền tab màu nhạt dịu mát, KHÔNG viền, chữ xám xanh đậm rõ nét */
+    div[data-testid="stPills"] button,
+    div[data-testid="stSegmentedControl"] button,
+    button[data-testid="stBaseButton-pills"],
+    button[data-testid="stBaseButton-segmented_control"],
+    div[data-testid="stPills"] [role="option"],
+    div[data-testid="stPills"] button[aria-selected="false"],
+    div[data-testid="stPills"] button[aria-pressed="false"],
+    div[data-testid="stSegmentedControl"] button[aria-selected="false"],
+    div[data-testid="stRadio"] div[role="radiogroup"] label {
+        background-color: #E4EFEA !important;
+        color: #234731 !important;
+        font-weight: 600 !important;
         font-size: 15px !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+        border: none !important;
+        border-radius: 20px !important;
+        padding: 9px 20px !important;
+        box-shadow: none !important;
+        outline: none !important;
         transition: all 0.2s ease !important;
     }
-    div[data-testid="stPills"] button[aria-selected="true"] {
+
+    /* Hover nút chưa chọn */
+    div[data-testid="stPills"] button:hover,
+    div[data-testid="stSegmentedControl"] button:hover,
+    button[data-testid="stBaseButton-pills"]:hover,
+    div[data-testid="stRadio"] div[role="radiogroup"] label:hover {
+        background-color: #D6E7E0 !important;
+        color: #173824 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* --- NÚT BÀI ĐÃ CHỌN (SELECTED TAB / PILL) --- */
+    /* Nền xanh lục bảo sang trọng, chữ trắng nổi bật, KHÔNG viền đỏ/đen */
+    div[data-testid="stPills"] button[aria-selected="true"],
+    div[data-testid="stPills"] button[aria-pressed="true"],
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+    div[data-testid="stPills"] [aria-selected="true"],
+    button[data-testid="stBaseButton-pills"][aria-selected="true"],
+    button[data-testid="stBaseButton-pills"][aria-pressed="true"] {
         background-color: #275338 !important;
         color: #FFFFFF !important;
-        border-color: #275338 !important;
-        box-shadow: 0 4px 12px rgba(39, 83, 56, 0.25) !important;
+        font-weight: 700 !important;
+        border: none !important;
+        border-radius: 20px !important;
+        box-shadow: 0 4px 12px rgba(39, 83, 56, 0.22) !important;
+    }
+
+    /* Ép chữ bên trong nút ĐÃ CHỌN sang màu trắng tinh */
+    div[data-testid="stPills"] button[aria-selected="true"] p,
+    div[data-testid="stPills"] button[aria-selected="true"] span,
+    div[data-testid="stPills"] button[aria-pressed="true"] p,
+    div[data-testid="stPills"] button[aria-pressed="true"] span,
+    button[data-testid="stBaseButton-pills"][aria-selected="true"] p,
+    button[data-testid="stBaseButton-pills"][aria-selected="true"] span,
+    button[data-testid="stBaseButton-pills"][aria-pressed="true"] p,
+    button[data-testid="stBaseButton-pills"][aria-pressed="true"] span {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+
+    /* Ép chữ bên trong nút CHƯA CHỌN sang màu xám xanh đậm rõ nét */
+    div[data-testid="stPills"] button[aria-selected="false"] p,
+    div[data-testid="stPills"] button[aria-selected="false"] span,
+    div[data-testid="stPills"] button[aria-pressed="false"] p,
+    div[data-testid="stPills"] button[aria-pressed="false"] span,
+    button[data-testid="stBaseButton-pills"][aria-selected="false"] p,
+    button[data-testid="stBaseButton-pills"][aria-selected="false"] span,
+    button[data-testid="stBaseButton-pills"][aria-pressed="false"] p,
+    button[data-testid="stBaseButton-pills"][aria-pressed="false"] span {
+        color: #234731 !important;
+        font-weight: 600 !important;
     }
 
     /* 7. PHẦN TAB PHÂN MÔN (Nghe, Đọc, Viết) */
