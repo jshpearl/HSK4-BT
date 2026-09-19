@@ -10,17 +10,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- CSS CAO CẤP: ÉP MÀU CHỮ ĐEN XÁM, FORCE LIGHT MODE CHO MỌI THÀNH PHẦN ---
-# Thiết kế tông màu xanh pastel dịu nhẹ (#F4F8F5) kết hợp trắng, che sạch nút deploy/menu hệ thống.
-# Các hộp expander và ô nhập liệu bắt buộc nền trắng tinh khiết, chữ đen/đen xám đậm rõ nét, chống tàng hình chữ khi máy học sinh bật Dark Mode.
+# --- CSS CAO CẤP: PHỐI MÀU PASTEL XINH ĐẸP, FORCE LIGHT MODE & DÀN HÀNG NGANG BÀI HỌC ---
 st.markdown("""
 <style>
-    /* 1. Nền trang xanh pastel dịu nhẹ lai trắng */
+    /* 1. Nền trang xanh pastel dịu nhẹ lai trắng tinh tế */
     .stApp {
-        background-color: #F4F8F5 !important;
+        background-color: #F3F7F4 !important;
     }
     
-    /* 2. Ép toàn bộ phông chữ sang màu đen xám rõ nét, nổi trên nền */
+    /* 2. Ép toàn bộ phông chữ sang màu đen xám / xám đậm sắc nét, chống tàng hình chữ */
     html, body, p, span, label, li, h1, h2, h3, h4, h5, h6, 
     .stMarkdown, .stWidgetLabel, .stMarkdownContainer p,
     div[data-testid="stMarkdownContainer"] p,
@@ -28,117 +26,120 @@ st.markdown("""
     div[data-testid="stNotification"] p, div[data-testid="stNotification"] div,
     .st-emotion-cache-1dp5vir, .st-emotion-cache-ue694m,
     .st-emotion-cache-zt5g90, .st-emotion-cache-1kyx60b, .st-emotion-cache-1629630 {
-        color: #333333 !important;
-        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
+        color: #1A2E22 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
         font-weight: 600 !important;
-        text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.05) !important;
+        text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.04) !important;
     }
     
     /* 3. Tiêu đề chính lớn nổi bật */
     h1 {
-        color: #2E5A44 !important;
-        font-weight: 700 !important;
-        text-align: center;
-        margin-bottom: 5px;
+        color: #1C4430 !important;
+        font-size: 2.2rem !important;
+        font-weight: 800 !important;
+        text-align: center !important;
+        margin-bottom: 6px !important;
     }
     
     /* Lời chào dưới tiêu đề */
     .subtitle {
-        text-align: center;
-        font-size: 18px;
-        color: #4A7A60 !important;
-        font-weight: bold;
-        margin-bottom: 25px;
+        text-align: center !important;
+        font-size: 17px !important;
+        color: #386641 !important;
+        font-weight: 600 !important;
+        margin-bottom: 22px !important;
     }
 
-    /* Khung hiển thị câu hỏi màu nhạt, đơn giản, tinh tế, nổi nhẹ */
+    /* Khung hiển thị câu hỏi màu nhạt, bo tròn mềm mại, nổi nhẹ */
     .question-card {
         background-color: #FFFFFF !important;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #E1ECE5 !important;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02) !important;
+        padding: 22px !important;
+        border-radius: 16px !important;
+        border: 1.5px solid #D5E4DC !important;
+        margin-bottom: 18px !important;
+        box-shadow: 0 4px 14px rgba(28, 68, 48, 0.04) !important;
     }
 
-    /* 4. Sửa lỗi khung đen mất chữ (Force Light Mode cho các widgets) */
+    /* 4. Force Light Mode cho các Form Widgets */
     
     /* Ô lựa chọn (Selectbox / Dropdown) */
     div[data-baseweb="select"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E1ECE5 !important;
-        border-radius: 8px !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 10px !important;
     }
     div[data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
-        color: #333333 !important;
+        color: #1F2937 !important;
     }
     div[data-baseweb="select"] span {
-        color: #333333 !important;
+        color: #1F2937 !important;
         font-weight: 600 !important;
     }
     
     /* Danh sách tùy chọn khi mở Dropdown */
     ul[role="listbox"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E1ECE5 !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 10px !important;
     }
     ul[role="listbox"] li {
         background-color: #FFFFFF !important;
-        color: #333333 !important;
+        color: #1F2937 !important;
     }
     ul[role="listbox"] li:hover {
-        background-color: #F1F8F4 !important;
-        color: #2E5A44 !important;
+        background-color: #EEF5F1 !important;
+        color: #1C4430 !important;
     }
 
     /* Ô nhập văn bản (Text Input & Text Area) */
     div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
         background-color: #FFFFFF !important;
-        color: #333333 !important;
-        border: 1px solid #E1ECE5 !important;
-        border-radius: 8px !important;
+        color: #1F2937 !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 10px !important;
+        padding: 10px 14px !important;
     }
 
     /* Khung code chứa từ vựng gợi ý ở trên đầu bài đọc */
     div[data-testid="stCodeBlock"], code, pre {
         background-color: #FFFFFF !important;
-        border: 1px solid #E1ECE5 !important;
-        border-radius: 8px !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 10px !important;
     }
     div[data-testid="stCodeBlock"] pre {
         background-color: #FFFFFF !important;
         border: none !important;
-        padding: 10px !important;
+        padding: 12px !important;
         margin: 0 !important;
     }
     div[data-testid="stCodeBlock"] code, code, pre {
         background-color: #FFFFFF !important;
-        color: #333333 !important;
+        color: #1F2937 !important;
         font-family: 'Segoe UI', sans-serif !important;
         font-size: 16px !important;
         font-weight: 700 !important;
     }
 
-    /* 5. Cải tạo Khung xổ ra (st.expander) nền trắng chữ đen tuyền rõ nét */
+    /* 5. Khung xổ ra (st.expander) nền trắng chữ đen tuyền rõ nét */
     div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E1ECE5 !important;
-        border-radius: 12px !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 14px !important;
+        box-shadow: 0 3px 8px rgba(28, 68, 48, 0.03) !important;
     }
     div[data-testid="stExpander"] details summary {
         background-color: #FFFFFF !important;
-        color: #333333 !important;
-        font-weight: 600 !important;
+        color: #1C4430 !important;
+        font-weight: 700 !important;
+        padding: 12px 16px !important;
     }
     div[data-testid="stExpander"] details > div {
         background-color: #FFFFFF !important;
         color: #000000 !important;
-        border-top: 1px solid #F1F8F4 !important;
-        padding: 15px !important;
+        border-top: 1px solid #EEF5F1 !important;
+        padding: 16px !important;
     }
-    /* Chữ bên trong Khung xổ ra bắt buộc đen tuyền */
     div[data-testid="stExpander"] p, 
     div[data-testid="stExpander"] span, 
     div[data-testid="stExpander"] strong,
@@ -147,42 +148,91 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* Định dạng Tabs */
+    /* 6. DÀN HÀNG NGANG CHỌN BÀI HỌC (Pills / Radio / Tabs Level 1) */
+    div[data-testid="stPills"] {
+        gap: 10px !important;
+        background-color: #E2EDE6 !important;
+        padding: 8px !important;
+        border-radius: 16px !important;
+        border: 1px solid #C8DCD2 !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+    div[data-testid="stPills"] button {
+        background-color: #FFFFFF !important;
+        color: #275338 !important;
+        font-weight: 700 !important;
+        border-radius: 12px !important;
+        border: 1px solid #D5E4DC !important;
+        padding: 10px 20px !important;
+        font-size: 15px !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stPills"] button[aria-selected="true"] {
+        background-color: #275338 !important;
+        color: #FFFFFF !important;
+        border-color: #275338 !important;
+        box-shadow: 0 4px 12px rgba(39, 83, 56, 0.25) !important;
+    }
+
+    /* 7. PHẦN TAB PHÂN MÔN (Nghe, Đọc, Viết) */
+    div[data-baseweb="tab-list"] {
+        gap: 8px !important;
+        background-color: #EBF3ED !important;
+        padding: 6px !important;
+        border-radius: 14px !important;
+        border: 1px solid #D0E2D5 !important;
+    }
     button[data-baseweb="tab"] {
-        color: #555555 !important;
-        font-weight: 600 !important;
+        background-color: transparent !important;
+        color: #386641 !important;
+        font-weight: 700 !important;
+        border-radius: 10px !important;
+        border: none !important;
+        padding: 8px 20px !important;
+        font-size: 15px !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: #2E5A44 !important;
-        border-bottom-color: #2E5A44 !important;
+        background-color: #386641 !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 3px 8px rgba(56, 102, 65, 0.2) !important;
+    }
+
+    /* Nút nộp bài thiết kế mượt mà nổi bật */
+    div.stButton > button {
+        background-color: #275338 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        border-radius: 12px !important;
+        padding: 12px 30px !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(39, 83, 56, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    div.stButton > button:hover {
+        background-color: #1C4430 !important;
+        box-shadow: 0 6px 16px rgba(28, 68, 48, 0.3) !important;
+        transform: translateY(-1px) !important;
     }
     
     /* Ẩn hoàn toàn các ký hiệu, menu và nút Deploy góc trên bên phải */
-    header {
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-    [data-testid="stHeader"] {
-        display: none !important;
-    }
-    .stAppDeployButton {
-        display: none !important;
-    }
-    div[data-testid="stDecoration"] {
-        display: none !important;
-    }
-    div[data-testid="stStatusWidget"] {
-        display: none !important;
-    }
+    header { visibility: hidden !important; height: 0px !important; }
+    [data-testid="stHeader"] { display: none !important; }
+    .stAppDeployButton { display: none !important; }
+    div[data-testid="stDecoration"] { display: none !important; }
+    div[data-testid="stStatusWidget"] { display: none !important; }
 
     /* Định dạng chân trang */
     .footer {
         text-align: center;
         padding: 30px 10px 10px 10px;
         font-size: 16px;
-        color: #555555 !important;
+        color: #386641 !important;
         font-weight: bold;
-        border-top: 1px solid #E1ECE5;
+        border-top: 1.5px solid #D5E4DC;
         margin-top: 50px;
     }
 </style>
@@ -191,11 +241,6 @@ st.markdown("""
 # --- KHỞI TẠO STATE HỌC SINH ---
 if 'student_name' not in st.session_state:
     st.session_state.student_name = ""
-
-# --- WEBHOOK GỬI ĐIỂM VỀ GOOGLE SHEETS ---
-# Giáo viên chỉ việc dán link Web App Google Apps Script mới vào đây
-GSHEET_URL = "https://script.google.com/macros/s/AKfycbwcT6NbCmuSV9BHuj4Ev1GPLHKdG7FJxIa1PkiG63jDVSYEU0W1e0zq-TUi0aID5xfVuQ/exec"
-
 def send_results_to_gsheet(student_name, lesson_title, section_name, score_str):
     payload = {
         "name": student_name,          # Bột: Tên học sinh
@@ -1620,6 +1665,11 @@ def show_lesson_19(student_name):
 
 
 
+
+# ==============================================================================
+# HỆ THỐNG MENU VÀ TỰ ĐỘNG SẮP XẾP BÀI MỚI LÊN TRƯỚC (SCALABLE ARCHITECTURE)
+# ==============================================================================
+
 LESSONS = {
     "Bài 19: 生活的味道": show_lesson_19,
     "Bài 18: 科技与世界": show_lesson_18,
@@ -1628,12 +1678,8 @@ LESSONS = {
 }
 
 # Tiêu đề bài học
-st.markdown("<h1>BÀI TẬP BÀI HSK4 (TẬP 2)</h1>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Chúc các bạn làm bài vui!<br><span style='font-size:14px; font-weight:normal; color:#555555;'>(Nếu dùng điện thoại, em hãy bấm vào nút <code>&gt;</code> ở góc trên bên trái để chọn bài nhé!)</span></div>", unsafe_allow_html=True)
-
-# sidebar chọn bài học (Bài mới thêm vào sẽ tự động nằm lên đầu vì dictionary được sắp xếp theo thứ tự khai báo)
-lesson_keys = list(LESSONS.keys())
-selected_lesson = st.sidebar.selectbox("📖 Chọn bài học để làm:", lesson_keys)
+st.markdown("<h1>BÀI TẬP HSK4 (TẬP 2)</h1>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>🌸 Chúc các bạn học tập tốt và làm bài vui vẻ! 🌸</div>", unsafe_allow_html=True)
 
 # Ô nhập họ tên học sinh ở đầu trang
 student_name = st.text_input(
@@ -1643,6 +1689,29 @@ student_name = st.text_input(
     key="name_input"
 )
 st.session_state.student_name = student_name
+
+st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:16px; font-weight:700; color:#275338; margin-bottom:8px;'>📖 CHỌN BÀI HỌC:</div>", unsafe_allow_html=True)
+
+# DÀN HÀNG NGANG CHỌN BÀI HỌC NGAY TRÊN TRANG CHÍNH (THÂN THIỆN ĐIỆN THOẠI)
+lesson_keys = list(LESSONS.keys())
+
+if hasattr(st, "pills"):
+    selected_lesson = st.pills(
+        label="Chọn bài học",
+        options=lesson_keys,
+        default=lesson_keys[0],
+        label_visibility="collapsed"
+    )
+    if not selected_lesson:
+        selected_lesson = lesson_keys[0]
+else:
+    selected_lesson = st.radio(
+        label="Chọn bài học",
+        options=lesson_keys,
+        horizontal=True,
+        label_visibility="collapsed"
+    )
 
 st.markdown("---")
 
