@@ -19,7 +19,7 @@ st.markdown("""
     }
     
     /* 2. Ép toàn bộ phông chữ sang màu đen xám / xám đậm sắc nét, chống tàng hình chữ khi bật Dark Mode */
-    html, body, p, span, label, li, h1, h2, h3, h4, h5, h6, 
+    html, body, p, span:not([aria-hidden="true"]):not([data-testid="stIcon"]), label, li, h1, h2, h3, h4, h5, h6, 
     .stMarkdown, .stWidgetLabel, .stMarkdownContainer p,
     div[data-testid="stMarkdownContainer"] p,
     div[role="radiogroup"] label, div[role="radiogroup"] p,
@@ -121,6 +121,21 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
+    /* Restore Streamlit Icon Fonts to prevent _arrow_right text overlapping */
+    [data-testid="stIcon"],
+    [data-testid="stExpanderToggleIcon"],
+    .material-symbols-outlined,
+    .material-symbols-rounded,
+    .material-symbols-sharp,
+    .material-icons,
+    div[data-testid="stExpander"] details summary span[aria-hidden="true"],
+    div[data-testid="stExpander"] details summary svg,
+    div[data-testid="stExpander"] details summary i {
+        font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+        font-weight: normal !important;
+        text-shadow: none !important;
+    }
+
     /* 5. Khung xổ ra (st.expander) nền trắng chữ đen tuyền rõ nét */
     div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
@@ -133,6 +148,9 @@ st.markdown("""
         color: #1C4430 !important;
         font-weight: 700 !important;
         padding: 12px 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
     }
     div[data-testid="stExpander"] details > div {
         background-color: #FFFFFF !important;
@@ -140,10 +158,10 @@ st.markdown("""
         border-top: 1px solid #EEF5F1 !important;
         padding: 16px !important;
     }
-    div[data-testid="stExpander"] p, 
-    div[data-testid="stExpander"] span, 
-    div[data-testid="stExpander"] strong,
-    div[data-testid="stExpander"] div {
+    div[data-testid="stExpander"] details > div p, 
+    div[data-testid="stExpander"] details > div span, 
+    div[data-testid="stExpander"] details > div strong,
+    div[data-testid="stExpander"] details > div div {
         color: #000000 !important;
         font-weight: 600 !important;
     }
