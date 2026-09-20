@@ -303,6 +303,8 @@ st.markdown("""
 # --- KHỞI TẠO STATE HỌC SINH ---
 if 'student_name' not in st.session_state:
     st.session_state.student_name = ""
+GSHEET_URL = "https://script.google.com/macros/s/AKfycbwcT6NbCmuSV9BHuj4Ev1GPLHKdG7FJxIa1PkiG63jDVSYEU0W1e0zq-TUi0aID5xfVuQ/exec"
+
 def send_results_to_gsheet(student_name, lesson_title, section_name, score_str):
     payload = {
         "name": student_name,          # Bột: Tên học sinh
