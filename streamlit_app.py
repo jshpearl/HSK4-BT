@@ -1,3292 +1,1807 @@
-# -*- coding: utf-8 -*-
 import streamlit as st
 import requests
 import json
 import os
-import re
-from datetime import datetime
 
-# ==============================================================================
-# ĐỀ LUYỆN HSK4 - H41110, H41111, H41218 (TRỌN BỘ 100 CÂU MỖI ĐỀ CHÍNH THỨC)
-# ==============================================================================
-
+# --- CẤU HÌNH TRANG WEB & UI/UX ---
 st.set_page_config(
-    page_title="ĐỀ LUYỆN HSK4",
-    page_icon="📝",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    page_title="HỆ THỐNG BÀI TẬP HSK4",
+    page_icon="📚",
+    layout="wide"
 )
 
-# --- CSS CAO CẤP PASTEL MULTI-COLOR, BOLD TEXT, MOBILE-FIRST ---
+# --- CSS CAO CẤP: PHỐI MÀU PASTEL XINH ĐẸP, FORCE LIGHT MODE & DÀN HÀNG NGANG BÀI HỌC ---
 st.markdown("""
 <style>
-
-    /* Che/Ẩn header, menu ba chấm, nút Deploy và logo góc phải trên của Streamlit */
-    header[data-testid="stHeader"],
-    [data-testid="stHeader"],
-    #MainMenu,
-    div[data-testid="stToolbar"],
-    div[data-testid="stDecoration"],
-    div[data-testid="stStatusWidget"] {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-
+    /* 1. Nền trang xanh pastel dịu nhẹ lai trắng tinh tế */
     .stApp {
-        background-color: #F8FAFC !important;
+        background-color: #F3F7F4 !important;
     }
-    html, body, p, span, label, li, h1, h2, h3, h4, h5, h6, 
+    
+    /* 2. Ép toàn bộ phông chữ sang màu đen xám / xám đậm sắc nét, chống tàng hình chữ khi bật Dark Mode */
+    html, body, p, span:not([aria-hidden="true"]):not([data-testid="stIcon"]), label, li, h1, h2, h3, h4, h5, h6, 
     .stMarkdown, .stWidgetLabel, .stMarkdownContainer p,
     div[data-testid="stMarkdownContainer"] p,
     div[role="radiogroup"] label, div[role="radiogroup"] p,
-    div[data-testid="stNotification"] p, div[data-testid="stNotification"] div {
-        color: #0F172A !important;
+    div[data-testid="stNotification"] p, div[data-testid="stNotification"] div,
+    .st-emotion-cache-1dp5vir, .st-emotion-cache-ue694m,
+    .st-emotion-cache-zt5g90, .st-emotion-cache-1kyx60b, .st-emotion-cache-1629630 {
+        color: #1A2E22 !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
+        text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.04) !important;
     }
+    
+    /* 3. Tiêu đề chính lớn nổi bật */
     h1 {
-        color: #0284C7 !important;
+        color: #1C4430 !important;
         font-size: 2.2rem !important;
-        font-weight: 900 !important;
+        font-weight: 800 !important;
         text-align: center !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 6px !important;
     }
+    
+    /* Lời chào dưới tiêu đề */
     .subtitle {
         text-align: center !important;
         font-size: 17px !important;
-        color: #DB2777 !important;
-        font-weight: 800 !important;
-        margin-bottom: 20px !important;
-    }
-    
-    .card-blue {
-        background-color: #FFFFFF !important;
-        padding: 18px 22px !important;
-        border-radius: 16px !important;
-        border-left: 6px solid #0284C7 !important;
-        border-top: 1.5px solid #E0F2FE !important;
-        border-right: 1.5px solid #E0F2FE !important;
-        border-bottom: 1.5px solid #E0F2FE !important;
-        margin-bottom: 16px !important;
-        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.06) !important;
-    }
-    .card-pink {
-        background-color: #FFFFFF !important;
-        padding: 18px 22px !important;
-        border-radius: 16px !important;
-        border-left: 6px solid #DB2777 !important;
-        border-top: 1.5px solid #FCE7F3 !important;
-        border-right: 1.5px solid #FCE7F3 !important;
-        border-bottom: 1.5px solid #FCE7F3 !important;
-        margin-bottom: 16px !important;
-        box-shadow: 0 4px 14px rgba(219, 39, 119, 0.06) !important;
-    }
-    .card-purple {
-        background-color: #FFFFFF !important;
-        padding: 18px 22px !important;
-        border-radius: 16px !important;
-        border-left: 6px solid #9333EA !important;
-        border-top: 1.5px solid #F3E8FF !important;
-        border-right: 1.5px solid #F3E8FF !important;
-        border-bottom: 1.5px solid #F3E8FF !important;
-        margin-bottom: 16px !important;
-        box-shadow: 0 4px 14px rgba(147, 51, 234, 0.06) !important;
-    }
-    .card-orange {
-        background-color: #FFFFFF !important;
-        padding: 18px 22px !important;
-        border-radius: 16px !important;
-        border-left: 6px solid #F97316 !important;
-        border-top: 1.5px solid #FFEDD5 !important;
-        border-right: 1.5px solid #FFEDD5 !important;
-        border-bottom: 1.5px solid #FFEDD5 !important;
-        margin-bottom: 16px !important;
-        box-shadow: 0 4px 14px rgba(249, 115, 22, 0.06) !important;
-    }
-    .card-amber {
-        background-color: #FFFFFF !important;
-        padding: 18px 22px !important;
-        border-radius: 16px !important;
-        border-left: 6px solid #F59E0B !important;
-        border-top: 1.5px solid #FEF3C7 !important;
-        border-right: 1.5px solid #FEF3C7 !important;
-        border-bottom: 1.5px solid #FEF3C7 !important;
-        margin-bottom: 16px !important;
-        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.06) !important;
+        color: #386641 !important;
+        font-weight: 600 !important;
+        margin-bottom: 22px !important;
     }
 
+    /* Khung hiển thị câu hỏi màu nhạt, bo tròn mềm mại, nổi nhẹ */
+    .question-card {
+        background-color: #FFFFFF !important;
+        padding: 22px !important;
+        border-radius: 16px !important;
+        border: 1.5px solid #D5E4DC !important;
+        margin-bottom: 18px !important;
+        box-shadow: 0 4px 14px rgba(28, 68, 48, 0.04) !important;
+    }
+
+    /* 4. Force Light Mode cho các Form Widgets */
+    
+    /* Ô lựa chọn (Selectbox / Dropdown) */
     div[data-baseweb="select"] {
         background-color: #FFFFFF !important;
-        border: 1.5px solid #CBD5E1 !important;
+        border: 1.5px solid #D5E4DC !important;
         border-radius: 10px !important;
     }
+    div[data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        color: #1F2937 !important;
+    }
+    div[data-baseweb="select"] span {
+        color: #1F2937 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Danh sách tùy chọn khi mở Dropdown */
+    ul[role="listbox"] {
+        background-color: #FFFFFF !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 10px !important;
+    }
+    ul[role="listbox"] li {
+        background-color: #FFFFFF !important;
+        color: #1F2937 !important;
+    }
+    ul[role="listbox"] li:hover {
+        background-color: #EEF5F1 !important;
+        color: #1C4430 !important;
+    }
+
+    /* Ô nhập văn bản (Text Input & Text Area) */
     div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
         background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        border: 1.5px solid #CBD5E1 !important;
+        color: #1F2937 !important;
+        border: 1.5px solid #D5E4DC !important;
         border-radius: 10px !important;
         padding: 10px 14px !important;
+    }
+
+    /* Khung code chứa từ vựng gợi ý ở trên đầu bài đọc */
+    div[data-testid="stCodeBlock"], code, pre {
+        background-color: #FFFFFF !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 10px !important;
+    }
+    div[data-testid="stCodeBlock"] pre {
+        background-color: #FFFFFF !important;
+        border: none !important;
+        padding: 12px !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stCodeBlock"] code, code, pre {
+        background-color: #FFFFFF !important;
+        color: #1F2937 !important;
+        font-family: 'Segoe UI', sans-serif !important;
+        font-size: 16px !important;
         font-weight: 700 !important;
     }
-    div.stButton > button {
-        background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
-        color: #FFFFFF !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        padding: 10px 24px !important;
-        border-radius: 12px !important;
-        border: none !important;
-        box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3) !important;
-        width: 100% !important;
+
+    /* ẨN HOÀN TOÀN ICON _arrow_right ĐỂ TRÁNH BỊ CHỮ LỖI TRỒNG LÊN TIÊU ĐỀ */
+    [data-testid="stExpanderToggleIcon"],
+    div[data-testid="stExpander"] details summary [data-testid="stExpanderToggleIcon"],
+    div[data-testid="stExpander"] details summary span[aria-hidden="true"],
+    div[data-testid="stExpander"] details summary svg,
+    div[data-testid="stExpander"] details summary i {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        font-size: 0 !important;
     }
+
+    /* 5. Khung xổ ra (st.expander) nền trắng chữ đen tuyền rõ nét */
+    div[data-testid="stExpander"] {
+        background-color: #FFFFFF !important;
+        border: 1.5px solid #D5E4DC !important;
+        border-radius: 14px !important;
+        box-shadow: 0 3px 8px rgba(28, 68, 48, 0.03) !important;
+    }
+    div[data-testid="stExpander"] details summary {
+        background-color: #FFFFFF !important;
+        color: #1C4430 !important;
+        font-weight: 700 !important;
+        padding: 12px 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+    div[data-testid="stExpander"] details > div {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border-top: 1px solid #EEF5F1 !important;
+        padding: 16px !important;
+    }
+    div[data-testid="stExpander"] details > div p, 
+    div[data-testid="stExpander"] details > div span, 
+    div[data-testid="stExpander"] details > div strong,
+    div[data-testid="stExpander"] details > div div {
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    /* 6. CHỌN BÀI HỌC (Pills / SegmentedControl / Radio / Tabs) */
+
+    /* Khung chứa các nút chọn bài */
+    div[data-testid="stPills"],
+    div[data-testid="stSegmentedControl"],
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        gap: 10px !important;
+        background-color: transparent !important;
+        padding: 4px 0px !important;
+        border: none !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+
+    /* --- NÚT BÀI CHƯA CHỌN (UNSELECTED TABS / PILLS) --- */
+    /* Nền tab màu nhạt dịu mát, KHÔNG viền, chữ xám xanh đậm rõ nét */
+    div[data-testid="stPills"] button,
+    div[data-testid="stSegmentedControl"] button,
+    button[data-testid="stBaseButton-pills"],
+    button[data-testid="stBaseButton-segmented_control"],
+    div[data-testid="stPills"] [role="option"],
+    div[data-testid="stPills"] button[aria-selected="false"],
+    div[data-testid="stPills"] button[aria-pressed="false"],
+    div[data-testid="stSegmentedControl"] button[aria-selected="false"],
+    div[data-testid="stRadio"] div[role="radiogroup"] label {
+        background-color: #E4EFEA !important;
+        color: #234731 !important;
+        font-weight: 600 !important;
+        font-size: 15px !important;
+        border: none !important;
+        border-radius: 20px !important;
+        padding: 9px 20px !important;
+        box-shadow: none !important;
+        outline: none !important;
+        transition: all 0.2s ease !important;
+    }
+
+    /* Hover nút chưa chọn */
+    div[data-testid="stPills"] button:hover,
+    div[data-testid="stSegmentedControl"] button:hover,
+    button[data-testid="stBaseButton-pills"]:hover,
+    div[data-testid="stRadio"] div[role="radiogroup"] label:hover {
+        background-color: #D6E7E0 !important;
+        color: #173824 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* --- NÚT BÀI ĐÃ CHỌN (SELECTED TAB / PILL) --- */
+    /* Nền xanh lục bảo sang trọng, chữ trắng nổi bật, KHÔNG viền đỏ/đen */
+    div[data-testid="stPills"] button[aria-selected="true"],
+    div[data-testid="stPills"] button[aria-pressed="true"],
+    div[data-testid="stSegmentedControl"] button[aria-selected="true"],
+    div[data-testid="stPills"] [aria-selected="true"],
+    button[data-testid="stBaseButton-pills"][aria-selected="true"],
+    button[data-testid="stBaseButton-pills"][aria-pressed="true"] {
+        background-color: #275338 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        border: none !important;
+        border-radius: 20px !important;
+        box-shadow: 0 4px 12px rgba(39, 83, 56, 0.22) !important;
+    }
+
+    /* Ép chữ bên trong nút ĐÃ CHỌN sang màu trắng tinh */
+    div[data-testid="stPills"] button[aria-selected="true"] p,
+    div[data-testid="stPills"] button[aria-selected="true"] span,
+    div[data-testid="stPills"] button[aria-pressed="true"] p,
+    div[data-testid="stPills"] button[aria-pressed="true"] span,
+    button[data-testid="stBaseButton-pills"][aria-selected="true"] p,
+    button[data-testid="stBaseButton-pills"][aria-selected="true"] span,
+    button[data-testid="stBaseButton-pills"][aria-pressed="true"] p,
+    button[data-testid="stBaseButton-pills"][aria-pressed="true"] span {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+
+    /* Ép chữ bên trong nút CHƯA CHỌN sang màu xám xanh đậm rõ nét */
+    div[data-testid="stPills"] button[aria-selected="false"] p,
+    div[data-testid="stPills"] button[aria-selected="false"] span,
+    div[data-testid="stPills"] button[aria-pressed="false"] p,
+    div[data-testid="stPills"] button[aria-pressed="false"] span,
+    button[data-testid="stBaseButton-pills"][aria-selected="false"] p,
+    button[data-testid="stBaseButton-pills"][aria-selected="false"] span,
+    button[data-testid="stBaseButton-pills"][aria-pressed="false"] p,
+    button[data-testid="stBaseButton-pills"][aria-pressed="false"] span {
+        color: #234731 !important;
+        font-weight: 600 !important;
+    }
+
+    /* 7. PHẦN TAB PHÂN MÔN (Nghe, Đọc, Viết) */
+    div[data-baseweb="tab-list"] {
+        gap: 8px !important;
+        background-color: #EBF3ED !important;
+        padding: 6px !important;
+        border-radius: 14px !important;
+        border: 1px solid #D0E2D5 !important;
+    }
+    button[data-baseweb="tab"] {
+        background-color: transparent !important;
+        color: #386641 !important;
+        font-weight: 700 !important;
+        border-radius: 10px !important;
+        border: none !important;
+        padding: 8px 20px !important;
+        font-size: 15px !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background-color: #386641 !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 3px 8px rgba(56, 102, 65, 0.2) !important;
+    }
+
+    /* Nút nộp bài thiết kế mượt mà nổi bật */
+    div.stButton > button {
+        background-color: #275338 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        border-radius: 12px !important;
+        padding: 12px 30px !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(39, 83, 56, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    div.stButton > button:hover {
+        background-color: #1C4430 !important;
+        box-shadow: 0 6px 16px rgba(28, 68, 48, 0.3) !important;
+        transform: translateY(-1px) !important;
+    }
+    
+    /* Ẩn hoàn toàn các ký hiệu, menu và nút Deploy góc trên bên phải */
+    header { visibility: hidden !important; height: 0px !important; }
+    [data-testid="stHeader"] { display: none !important; }
+    .stAppDeployButton { display: none !important; }
+    div[data-testid="stDecoration"] { display: none !important; }
+    div[data-testid="stStatusWidget"] { display: none !important; }
+
+    /* Định dạng chân trang */
     .footer {
         text-align: center;
-        margin-top: 40px;
-        padding: 20px;
+        padding: 30px 10px 10px 10px;
         font-size: 16px;
-        color: #8D6E63;
-        font-weight: 800;
+        color: #386641 !important;
+        font-weight: bold;
+        border-top: 1.5px solid #D5E4DC;
+        margin-top: 50px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-CARD_CLASSES = ["card-blue", "card-pink", "card-purple", "card-orange", "card-amber"]
+# --- KHỞI TẠO STATE HỌC SINH ---
+if 'student_name' not in st.session_state:
+    st.session_state.student_name = ""
+GSHEET_URL = "https://script.google.com/macros/s/AKfycbwcT6NbCmuSV9BHuj4Ev1GPLHKdG7FJxIa1PkiG63jDVSYEU0W1e0zq-TUi0aID5xfVuQ/exec"
 
-GSHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxfZ7f292zc7Rcq8OdalCQIKl9WDY1fAc21pBMAmXFKr1qnQ3F8FeH-vJqIebuWKQ1U8A/exec"
-
-def send_score_to_gsheet(student_name, exam_code, section_name, score_raw, score_100):
+def send_results_to_gsheet(student_name, lesson_title, section_name, score_str):
     payload = {
-        "student_name": student_name,
-        "lesson": exam_code,
-        "lesson_title": exam_code,
-        "section": section_name,
-        "score": f"{score_raw} ({score_100:.1f}/100 điểm)",
-        "sheet": "HSK4",
-        "sheet_name": "HSK4",
-        "tab_name": "HSK4",
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "name": student_name,          # Bột: Tên học sinh
+        "student_name": student_name,  # Dự phòng
+        "lesson": lesson_title,        # Cột: Bài học (e.g. "Bài 16", "Bài 17")
+        "lesson_title": lesson_title,  # Dự phòng
+        "section": section_name,       # Cột: Phần làm bài (e.g. "PHẦN NGHE")
+        "score": score_str             # Cột: Điểm số
     }
     try:
-        res = requests.post(GSHEET_WEBHOOK_URL, json=payload, timeout=8)
-        if res.status_code in [200, 201] or "success" in res.text.lower():
-            return True, "Đã lưu kết quả bài làm thành công về Google Sheet chung (Tab HSK4) của cô Ngọc!"
-        else:
-            return True, "Đã lưu ghi nhận điểm số!"
-    except Exception as e:
-        return False, f"Lỗi kết nối Webhook: {str(e)}"
+        requests.post(GSHEET_URL, json=payload)
+    except:
+        pass
 
-def render_audio_player(exam_code):
-    mp3_filename = f"{exam_code}.mp3"
-    st.markdown(f"#### 🎧 **PHÁT ÂM THANH BÀI NGHE ({mp3_filename})**")
-    if os.path.exists(mp3_filename):
-        st.audio(mp3_filename, format="audio/mpeg")
-    elif os.path.exists(os.path.join("audio", mp3_filename)):
-        st.audio(os.path.join("audio", mp3_filename), format="audio/mpeg")
+# --- HÀM TÌM KIẾM ĐỆ QUY FILE AUDIO TRÊN GITHUB (CHỐNG SẬP TRANG) ---
+def find_audio_file(filename_patt):
+    # 1. Tìm các folder phổ biến và ghép thử trực tiếp
+    for folder in ["audio", "Audio", "AUDIO", "assets", "sound", "sounds", ""]:
+        for ext in [".mp3", ".MP3", ".wav", ".WAV", ".m4a", ".M4A"]:
+            p = os.path.join(folder, filename_patt + ext) if folder else filename_patt + ext
+            if os.path.exists(p):
+                return p
+                
+    # 2. Tìm kiếm đệ quy toàn bộ thư mục dự án
+    for root, dirs, files in os.walk("."):
+        if any(x in root for x in [".git", ".venv", "__pycache__", ".streamlit"]):
+            continue
+        for f in files:
+            name, ext = os.path.splitext(f)
+            if filename_patt.lower() in f.lower() and ext.lower() in [".mp3", ".wav", ".m4a"]:
+                return os.path.join(root, f)
+    return None
+
+def play_audio(filename_patt):
+    found_path = find_audio_file(filename_patt)
+    if found_path:
+        try:
+            with open(found_path, "rb") as f:
+                st.audio(f.read(), format="audio/mp3")
+        except Exception as e:
+            st.error(f"⚠️ Lỗi giải mã tệp âm thanh '{found_path}': {str(e)}")
     else:
-        st.info(f"💡 Tải file nhạc **{mp3_filename}** lên cùng thư mục dự án GitHub với Streamlit để phát bài nghe nhé!")
+        st.warning(f"🎧 Trình phát: Chưa tìm thấy tệp âm thanh chứa kí hiệu '{filename_patt}' trong thư mục dự án của bạn trên GitHub.")
+        st.markdown("Vui lòng tải thư mục `audio/` chứa các tệp âm thanh tương ứng lên GitHub của bạn nhé!")
 
-st.markdown("<h1>ĐỀ LUYỆN HSK4</h1>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Chúc các bạn ôn tập vui và hiệu quả</div>", unsafe_allow_html=True)
+# ==============================================================================
+# HÀM HIỂN THỊ CHI TIẾT BÀI 16
+# ==============================================================================
+def show_lesson_16(student_name):
+    # Khởi tạo state riêng cho Bài 16
+    if 'l16_l_sub' not in st.session_state: st.session_state.l16_l_sub = False
+    if 'l16_r_sub' not in st.session_state: st.session_state.l16_r_sub = False
+    if 'l16_w_sub' not in st.session_state: st.session_state.l16_w_sub = False
 
-if "student_name" not in st.session_state:
-    st.session_state.student_name = ""
+    t_lis, t_read, t_write = st.tabs(["PHẦN NGHE", "PHẦN ĐỌC", "PHẦN VIẾT"])
 
+    # ------------------ PHẦN NGHE BÀI 16 ------------------
+    with t_lis:
+        st.markdown("### 一、听力 (Phần nghe)")
+        st.markdown("#### **第一部分 (Phần 1) - 判断对错**")
+        play_audio("16-1")
+        
+        q1_5_text = [
+            "1. ★ 他知道怎么办签证。",
+            "2. ★ 护士工作前要通过考试。",
+            "3. ★ 他第一次见女朋友时很放松。",
+            "4. ★ 那篇文章写得很精彩。",
+            "5. ★ 做得不好时别失望。"
+        ]
+        q1_5_ans = ["✘", "✔", "✘", "✘", "✔"]
+        user_q1_5 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q1_5_text):
+            target_col = col1 if i < 3 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.radio(f"Chọn câu {i+1}:", ["Chưa chọn", "✔ (Đúng)", "✘ (Sai)"], key=f"l16_lis_p1_{i}")
+                user_q1_5.append(ans)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 单项选择**")
+        play_audio("16-2")
+        
+        q6_12_options = [
+            ["A. 杂志", "B. 成绩单", "C. 报名表", "D. 传真"],
+            ["A. 害怕失败", "B. 弹得不好", "C. 没有报名", "D. 没有时间"],
+            ["A. 睡不着", "B. 还有工作", "C. 在等人", "D. 在看小说"],
+            ["A. 来宾馆", "B. 填表格", "C. 说很满意", "D. 写总结"],
+            ["A. 商店", "B. 学校", "C. 公司", "D. 饭馆"],
+            ["A. 经历丰富", "B. 非常可怜", "C. 更会打扮", "D. 都很聪明"],
+            ["A. 力气很大", "B. 爱看小说", "C. 现在是记者", "D. 去过很多地方"]
+        ]
+        q6_12_ans = ["B", "C", "D", "B", "C", "A", "D"]
+        user_q6_12 = []
+        col1, col2 = st.columns(2)
+        for i in range(7):
+            target_col = col1 if i < 4 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+6}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+6}:", ["Chưa chọn"] + q6_12_options[i], key=f"l16_lis_p2_{i}")
+                user_q6_12.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 单项选择**")
+        play_audio("16-3")
+        
+        q13_22_options = [
+            ["A. 正在排队", "B. 忘了号码", "C. 没有带笔", "D. 要填表格"],
+            ["A. 办公室", "B. 书房", "C. 厨房", "D. 门上"],
+            ["A. 坐地铁", "B. 坐出租车", "C. 自己开车", "D. 坐公共汽车"],
+            ["A. 裤子脏了", "B. 手机坏了", "C. 比赛输了", "D. 足球丢了"],
+            ["A. 包", "B. 钥匙", "C. 塑料袋", "D. 书"],
+            ["A. 语言学", "B. 经济学", "C. 国际关系", "D. 环境科学"],
+            ["A. 冰箱质量", "B. 买洗衣机", "C. 修理汽车", "D. 选择丈夫"],
+            ["A. 非常担心", "B. 爱修东西", "C. 不爱逛街", "D. 性格很好"],
+            ["A. 上五年级", "B. 不爱学习", "C. 成绩很好", "D. 在写作业"],
+            ["A. 很怀疑", "B. 太吵了", "C. 被骗了", "D. 明白了"]
+        ]
+        q13_22_ans = ["D", "B", "A", "C", "B", "B", "D", "B", "B", "A"]
+        user_q13_22 = []
+        col1, col2 = st.columns(2)
+        for i in range(10):
+            target_col = col1 if i < 5 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+13}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+13}:", ["Chưa chọn"] + q13_22_options[i], key=f"l16_lis_p3_{i}")
+                user_q13_22.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN NGHE", key="l16_btn_sub_lis"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                    if u_v == q1_5_ans[i]: correct_cnt += 1
+                for i in range(7):
+                    if user_q6_12[i] == q6_12_ans[i]: correct_cnt += 1
+                for i in range(10):
+                    if user_q13_22[i] == q13_22_ans[i]: correct_cnt += 1
+                st.session_state.l16_l_sub = True
+                st.session_state.l16_l_score = f"{correct_cnt}/22"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l16_l_score}.")
+                send_results_to_gsheet(student_name, "Bài 16", "PHẦN NGHE", st.session_state.l16_l_score)
+
+        if st.session_state.l16_l_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            # Phần 1 giải thích sai
+            for i in range(5):
+                u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                if u_v != q1_5_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+1} sai:</span> {q1_5_text[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q1_5_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+1}"):
+                        scripts = [
+                            "办签证需要准备哪些材料，我也不太清楚，不过我有大使馆的电话号码，我可以帮你问一下。\n(Tôi cũng không rõ cần chuẩn bị giấy tờ gì để làm visa, nhưng tôi có số điện thoại của Đại sứ quán, để tôi hỏi giúp bạn.)",
+                            "只有通过了考试，完全符合要求后，护士才能正式开始工作。医院对护士这一职业的要求是：专业、负责、尊重生命。\n(Chỉ sau khi vượt qua kỳ thi và hoàn toàn đáp ứng yêu cầu, y tá mới có thể chính thức bắt đầu làm việc.)",
+                            "第一次跟女朋友见面的时候，他紧张极了，脸和耳朵都红了，几乎不敢看女朋友的眼睛。\n(Lần đầu gặp bạn gái, anh ấy vô cùng căng thẳng, mặt và tai đều đỏ bừng, hầu như không dám nhìn vào mắt cô ấy.)",
+                            "这篇文章你还得拿回去好好改改，主要是内容有点儿乱，重点不够清楚，另外，有几个句子还有语法问题。\n(Bài viết này bạn phải mang về sửa lại thật kỹ, chủ yếu là nội dung hơi lộn xộn, trọng tâm chưa rõ ràng, ngoài ra một số câu còn gặp vấn đề ngữ pháp.)",
+                            "受到批评时，也别伤心失望，谁都有做错事或者做得不够好的时候。只要不放弃努力，你就仍然有希望。\n(Khi bị phê bình thì cũng đừng đau lòng thất vọng, ai cũng có lúc làm sai hoặc làm chưa đủ tốt. Chỉ cần không từ bỏ nỗ lực, bạn vẫn luôn có hy vọng.)"
+                        ]
+                        st.markdown(scripts[i])
+
+    # ------------------ PHẦN ĐỌC BÀI 16 ------------------
+    with t_read:
+        st.markdown("### 二、阅读 (Phần đọc)")
+        st.markdown("#### **第一部分 (Phần 1) - 选词填空**")
+        st.markdown("**第 23-26 题：**")
+        st.code("A 冷静    B 尊重    C 敢    D 坚持    E 呀")
+        
+        q23_26_texts = [
+            "23. 哥，你快来看，这是什么植物（ ）？\n叶子怎么这么宽？",
+            "24. 做事情不要一开始就考虑太多，害怕失败，\n什么都不（ ）做怎么可能成功？",
+            "25. 邀请别人吃饭，至少要提前一天联系。\n首先，这是对被邀请人表示（ ）；\n其次，也方便别人做好安排。",
+            "26. 当事情没有按照原来的计划进行时，不要太着急、太担心，\n而应该使自己（ ）下来，态度积极地去想解决问题的办法。"
+        ]
+        q23_26_ans = ["E", "C", "B", "A"]
+        user_q23_26 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q23_26_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn", "A. 冷静", "B. 尊重", "C. 敢", "D. 坚持", "E. 呀"], key=f"l16_read_p1_1_{i}")
+                user_q23_26.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("**第 27-30 题：**")
+        st.code("A 激动    B 挂    C 温度    D 报名    E 郊区")
+        q27_30_texts = [
+            "27. A：我那件红衬衫呢？你放哪儿了？\nB：洗了，在外边（ ）着，还没干呢。你穿这件就很好，很精神。",
+            "28. A：去植物园玩儿的同事一共是十二位，现在还有人要（ ）吗？\nB：我也想去。明天我们大概去多长时间？几点能回来呢？",
+            "29. A：外面雪下得这么大，那些小伙子们怎么都跑外边去了？\nB：他们都是南方人，南方冬天很少下雪，更不用说这么大的雪，所以他们肯定特别（      ）。",
+            "30. A：现在城市里越来越多的人喜欢到（ ）过周末了。\nB：是啊，那里空气新鲜、环境安静，可以让人好好放松一下。"
+        ]
+        q27_30_ans = ["B", "D", "A", "E"]
+        user_q27_30 = []
+        for i, q_text in enumerate(q27_30_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn", "A. 激动", "B. 挂", "C. 温度", "D. 报名", "E. 郊区"], key=f"l16_read_p1_2_{i}")
+                user_q27_30.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 排列顺序**")
+        q31_34_texts = [
+            "31.\n\nA. 因此，预习是学习的第一步\n\nB. 上课的时候，学习效果才会更好\n\nC. 提前对要学的内容有个大概的了解",
+            "32.\n\nA. 结果眼睛越来越不好\n\nB. 所以现在我不敢再躺着看书了\n\nC. 拿我来说，小时候我总喜欢躺在床上看书",
+            "33.\n\nA. 我们还是把它推到里面去吧\n\nB. 沙发太大了，放这儿容易堵着门，进出不方便\n\nC. 把这个地方空出来",
+            "34.\n\nA. 也许你会发现， 这些事情其实用不着烦恼\n\nB. 每次发脾气前，请先给自己几分钟\n\nC. 冷静地想一想，是不是值得为此生气"
+        ]
+        q31_34_ans = ["CBA", "CAB", "BAC", "BCA"]
+        user_q31_34 = []
+        for i, q_text in enumerate(q31_34_texts):
+            st.markdown(f"<div class='question-card'>{q_text}", unsafe_allow_html=True)
+            ans = st.text_input(f"Thứ tự câu {i+31} (Ví dụ: ABC):", key=f"l16_read_p2_{i}").strip().upper()
+            user_q31_34.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 阅读理解**")
+        q35_43_questions = [
+            "35. 每年有成千上万的高中毕业生报名参加电影学院的艺术考试，\n\n他们中很多人都抱着成为著名演员的理想，\n\n但其实大部分考生并不清楚表演到底是什么。\n\n★ 根据这段话，很多考生：",
+            "36. 举办这次活动，主要是为了向大家介绍我们公司推出的最新手机，\n\n希望通过这次活动引起大家的兴趣，\n\n让大家更了解我们。\n\n★ 举办这次活动是为了：",
+            "37. 在别人伤心难过的时候，我们总会对他/她表示同情。\n\n同情是最美好的情感之一，然而同情并不是高高在上的关心，\n\n它应该是对别人的理解、尊重和支持。\n\n★ 这段话认为，同情别人：",
+            "38. 现在的输或者赢都只是暂时的，没有人会永远输，\n\n也没有人会一直赢。\n\n生活的关键就是：只要你敢想、敢做、积极努力了，\n\n那么无论是输还是赢，生活都一样精彩。\n\n★ 根据这段话，可以知道：",
+            "39. 耳朵每天都帮助我们听到各种各样的声音，\n\n但我们可不像重视眼睛、鼻子那样重视它。\n\n很多时候人们常常感觉不到它，甚至忘记了它。\n\n其实我们都错了，有研究发现，通过耳朵可以看出一个人是不是健康，\n\n甚至是什么样的性格。\n\n★ 这段话主要讲：",
+            "[40-41] “我找林医生，我有急事！”一位妈妈非常着急地给林医生打电话，\n\n林医生的妻子接的电话。\n\n“他刚出去了，您有什么事吗？”\n\n“天哪，我的小儿子刚才把我的手表吃到肚子里了，林医生什么时候能回来？”\n\n“两个小时左右。”医生的妻子回答。\n\n“两个小时！这段时间我该怎么办呀？”\n\n“我很抱歉，您恐怕只能先用另一块儿手表了。”\n\n40. ★ 孩子怎么了？",
+            "41. ★ 关于林医生，可以知道什么？",
+            "[42-43] 父母是孩子第一位老师，也是最重要的老师。\n\n父母不仅要帮助孩子认识世界，教会他们知识，\n\n还应该帮助孩子养成好的生活习惯，比如睡前刷牙、节约用水。\n\n另外，还要教会他们懂礼貌、对人诚实。\n\n这些都需要父母的耐心教育。\n\n孩子习惯的养成会受到父母的影响，\n\n所以做父母的平时一定要注意自己的言行。\n\n42. ★ 根据这段话，父母有什么责任？",
+            "43. ★ 根据这段话，孩子习惯的养成："
+        ]
+        q35_43_options = [
+            ["A. 年龄比较大", "B. 成绩很优秀", "C. 不理解表演", "D. 已经是演员"],
+            ["A. 比赛", "B. 打折", "C. 积累经验", "D. 介绍手机"],
+            ["A. 不值得做", "B. 非常可惜", "C. 会让人难过", "D. 是表示支持"],
+            ["A. 耐心非常重要", "B. 生活会很精彩", "C. 输和赢不重要", "D. 要多参加活动"],
+            ["A. 有趣的鼻子", "B. 怎样保护眼睛", "C. 重新认识耳朵", "D. 怎样打扮自己"],
+            ["A. 很想买手表", "B. 突然流血了", "C. 把药吃错了", "D. 把手表吃了"],
+            ["A. 不在家", "B. 很伤心", "C. 表丢了", "D. 不负责"],
+            ["A. 保护孩子安全", "B. 教育孩子", "C. 回答问题", "D. 替孩子做决定"],
+            ["A. 过程会很慢", "B. 会比较轻松", "C. 与年龄有关", "D. 受父母影响"]
+        ]
+        q35_43_ans = ["C", "D", "D", "C", "C", "D", "A", "B", "D"]
+        user_q35_43 = []
+        for i in range(9):
+            st.markdown(f"<div class='question-card'>{q35_43_questions[i]}", unsafe_allow_html=True)
+            ans = st.selectbox(f"Đáp án câu {i+35}:", ["Chưa chọn"] + q35_43_options[i], key=f"l16_read_p3_{i}")
+            user_q35_43.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        if st.button("🚀 NỘP BÀI PHẦN ĐỌC", key="l16_btn_sub_read"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(4):
+                    if user_q23_26[i] == q23_26_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q27_30[i] == q27_30_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q31_34[i] == q31_34_ans[i]: correct_cnt += 1
+                for i in range(9):
+                    if user_q35_43[i] == q35_43_ans[i]: correct_cnt += 1
+                st.session_state.l16_r_sub = True
+                st.session_state.l16_r_score = f"{correct_cnt}/21"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l16_r_score}.")
+                send_results_to_gsheet(student_name, "Bài 16", "PHẦN ĐỌC", st.session_state.l16_r_score)
+
+        if st.session_state.l16_r_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(4):
+                if user_q23_26[i] != q23_26_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+23} sai:</span> {q23_26_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q23_26_ans[i]}**")
+            for i in range(4):
+                if user_q27_30[i] != q27_30_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+27} sai:</span> {q27_30_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q27_30_ans[i]}**")
+
+    # ------------------ PHẦN VIẾT BÀI 16 ------------------
+    with t_write:
+        st.markdown("### 三、书写 (Phần viết)")
+        st.markdown("#### **第一部分 (Phần 1) - Sắp xếp câu hoàn chỉnh**")
+        st.warning("⚠️ Chú ý: Phần viết được chấm tuyệt đối nghiêm ngặt. Sai bất kỳ 1 chữ hoặc 1 dấu câu nào cũng tính là sai hoàn toàn cả câu.")
+        
+        q44_48_words = [
+            "44. 200 / 估计 / 王老师 / 报名人数 / 会 / 超过",
+            "45. 传真号码 / 是 / 你们 / 多少 / 公司 / 的",
+            "46. 请 / 帮我 / 一个 / 当地导游 / 你能 / 吗",
+            "47. 失望 / 让 / 那个 / 很 / 电影 / 观众",
+            "48. 是 / 好消息 / 激动人心的 / 实在 / 一个 / 这"
+        ]
+        q44_48_acceptable_ans = [
+            ["王老师估计报名人数会超过200。", "估计王老师报名人数会超过200。"],
+            ["你们公司的传真号码是多少？", "你们公司传真号码是多少？"],
+            ["你能帮我请一个当地导游吗？", "你能帮我请个当地导游吗？"],
+            ["那个电影让观众很失望。"],
+            ["这实在是一个激动人心的好消息。", "这实在是个激动人心的好消息。"]
+        ]
+        user_q44_48 = []
+        for i, words in enumerate(q44_48_words):
+            st.markdown(f"<div class='question-card'><strong>Câu {i+44}:</strong> {words}", unsafe_allow_html=True)
+            ans = st.text_input("Nhập câu hoàn chỉnh của bạn tại đây:", key=f"l16_write_p1_{i}").strip()
+            user_q44_48.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - Nhìn tranh đặt câu (Tự luận đối chiếu gợi ý)**")
+        st.markdown("<div class='question-card'><strong>Câu 49:</strong> Tranh người thanh niên chơi bóng rổ. Từ gợi ý: <strong>小伙子</strong></div>", unsafe_allow_html=True)
+        user_q49 = st.text_area("Viết câu của bạn:", key="l16_write_p2_49")
+        st.markdown("<div class='question-card'><strong>Câu 50:</strong> Tranh cầm bút điền vào bảng đơn. Từ gợi ý: <strong>表格</strong></div>", unsafe_allow_html=True)
+        user_q50 = st.text_area("Viết câu của bạn:", key="l16_write_p2_50")
+
+        if st.button("🚀 NỘP BÀI PHẦN VIẾT", key="l16_btn_sub_write"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    user_ans = user_q44_48[i].strip()
+                    matched = False
+                    for possible_ans in q44_48_acceptable_ans[i]:
+                        if user_ans == possible_ans.strip():
+                            matched = True
+                            break
+                    if matched: correct_cnt += 1
+                st.session_state.l16_w_sub = True
+                st.session_state.l16_w_score = f"{correct_cnt}/5"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l16_w_score}.")
+                send_results_to_gsheet(student_name, "Bài 16", "PHẦN VIẾT", st.session_state.l16_w_score)
+
+        if st.session_state.l16_w_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(5):
+                user_ans = user_q44_48[i].strip()
+                matched = False
+                for possible_ans in q44_48_acceptable_ans[i]:
+                    if user_ans == possible_ans.strip():
+                        matched = True
+                        break
+                if not matched:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+44} viết chưa chính xác:</span>", unsafe_allow_html=True)
+                    st.markdown(f"Đáp án của bạn: `{user_q44_48[i]}`")
+                    st.markdown(f"👉 Đáp án đúng: **{q44_48_acceptable_ans[i][0]}**")
+
+
+# ==============================================================================
+# HÀM HIỂN THỊ CHI TIẾT BÀI 17
+# ==============================================================================
+def show_lesson_17(student_name):
+    # Khởi tạo state riêng cho Bài 17
+    if 'l17_l_sub' not in st.session_state: st.session_state.l17_l_sub = False
+    if 'l17_r_sub' not in st.session_state: st.session_state.l17_r_sub = False
+    if 'l17_w_sub' not in st.session_state: st.session_state.l17_w_sub = False
+
+    t_lis, t_read, t_write = st.tabs(["PHẦN NGHE", "PHẦN ĐỌC", "PHẦN VIẾT"])
+
+    # ------------------ PHẦN NGHE BÀI 17 ------------------
+    with t_lis:
+        st.markdown("### 一、听力 (Phần nghe)")
+        st.markdown("#### **第一部分 (Phần 1) - 判断对错**")
+        play_audio("17-1")
+        
+        q1_5_text = [
+            "1. ★ 秋季不适合去黄山。",
+            "2. ★ 地图上蓝色表示海洋。",
+            "3. ★ 开车时听广播很不安全。",
+            "4. ★ 海洋里的植物很少。",
+            "5. ★ 明天是中秋节。"
+        ]
+        q1_5_ans = ["✘", "✔", "✘", "✘", "✘"]
+        user_q1_5 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q1_5_text):
+            target_col = col1 if i < 3 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.radio(f"Chọn câu {i+1}:", ["Chưa chọn", "✔ (Đúng)", "✘ (Sai)"], key=f"l17_lis_p1_{i}")
+                user_q1_5.append(ans)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 单项选择**")
+        play_audio("17-2")
+        
+        q6_12_options = [
+            ["A. 入口很远", "B. 应该右拐", "C. 女的在问路", "D. 海洋馆很好"],
+            ["A. 想请假", "B. 被表扬了", "C. 受到邀请了", "D. 要写计划书"],
+            ["A. 没有精神", "B. 发烧了", "C. 适应环境", "D. 肚子饿了"],
+            ["A. 地铁站", "B. 机场", "C. 公交站", "D. 火车站"],
+            ["A. 做生意很容易", "B. 比赛非常精彩", "C. 价格已经最低", "D. 竞争也有好处"],
+            ["A. 回趟家", "B. 去国外", "C. 看奶奶", "D. 准备考试"],
+            ["A. 电影票免费", "B. 票还没买", "C. 女的下午有事", "D. 电影很精彩"]
+        ]
+        q6_12_ans = ["C", "D", "A", "C", "D", "D", "B"]
+        user_q6_12 = []
+        col1, col2 = st.columns(2)
+        for i in range(7):
+            target_col = col1 if i < 4 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+6}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+6}:", ["Chưa chọn"] + q6_12_options[i], key=f"l17_lis_p2_{i}")
+                user_q6_12.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 单项选择**")
+        play_audio("17-3")
+        
+        q13_22_options = [
+            ["A. 喜欢照相", "B. 五岁了", "C. 有个哥哥", "D. 个子不高"],
+            ["A. 公园", "B. 餐厅", "C. 超市", "D. 宾馆"],
+            ["A. 下雨了", "B. 在下雪", "C. 很暖和", "D. 刮风了"],
+            ["A. 地球大小", "B. 海水颜色", "C. 节约用水", "D. 空气污染"],
+            ["A. 害怕失败", "B. 还没输过", "C. 不太会打", "D. 没有男的好"],
+            ["A. 植物园", "B. 卧室", "C. 院子里", "D. 南方"],
+            ["A. 植物学", "B. 医学", "C. 历史学", "D. 动物学"],
+            ["A. 自然", "B. 节目", "C. 老虎", "D. 亚洲"],
+            ["A. 寒假", "B. 暑假", "C. 每天中午", "D. 每月15号"],
+            ["A. 天气太热", "B. 地方太小", "C. 提前下班", "D. 保证安全"]
+        ]
+        q13_22_ans = ["C", "A", "B", "C", "B", "C", "D", "C", "B", "D"]
+        user_q13_22 = []
+        col1, col2 = st.columns(2)
+        for i in range(10):
+            target_col = col1 if i < 5 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+13}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+13}:", ["Chưa chọn"] + q13_22_options[i], key=f"l17_lis_p3_{i}")
+                user_q13_22.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN NGHE", key="l17_btn_sub_lis"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                    if u_v == q1_5_ans[i]: correct_cnt += 1
+                for i in range(7):
+                    if user_q6_12[i] == q6_12_ans[i]: correct_cnt += 1
+                for i in range(10):
+                    if user_q13_22[i] == q13_22_ans[i]: correct_cnt += 1
+                st.session_state.l17_l_sub = True
+                st.session_state.l17_l_score = f"{correct_cnt}/22"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l17_l_score}.")
+                send_results_to_gsheet(student_name, "Bài 17", "PHẦN NGHE", st.session_state.l17_l_score)
+
+        if st.session_state.l17_l_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(5):
+                u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                if u_v != q1_5_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+1} sai:</span> {q1_5_text[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q1_5_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+1}"):
+                        scripts = [
+                            "我觉得秋天是去黄山的最好季节，因为这时候天气不冷也不热，而且山上的树叶有很多种颜色，绿的、黄的、红的，漂亮极了。\n(Tôi thấy mùa thu là mùa đẹp nhất để đi Hoàng Sơn, vì lúc này trời không nóng cũng không lạnh, và lá cây trên núi có rất nhiều màu sắc, vàng, xanh, đỏ, vô cùng xinh đẹp.)",
+                            "儿子，你看，地图上不同的颜色表示不同的地方，绿色的是森林，蓝色的是海洋。\n(Con trai nhìn này, màu sắc khác nhau trên bản đồ đại diện cho các vùng đất khác nhau, màu xanh lá cây là rừng rậm, màu xanh da trời là đại dương.)",
+                            "很多司机都喜欢开车时听广播，因为通过听广播，他们不但可以了解路上的堵车情况，而且开车时也不会觉得太无聊。\n(Rất nhiều tài xế đều thích nghe radio khi lái xe, vì qua đó họ không chỉ biết được tình trạng tắc đường mà còn không cảm thấy quá tẻ nhạt.)",
+                            "和森林一样，在海洋里也有很多种植物，它们与海洋里的动物，共同组成了一个海底世界。\n(Cũng giống như rừng rậm, trong đại dương có rất nhiều loại thực vật, chúng cùng động vật biển cấu thành một thế giới dưới lòng đại dương.)",
+                            "昨天是中秋节，这一天的月亮应该是一年中最大最亮的。但是让人失望的是，昨天的月亮一直在厚厚的云层后面睡觉，我们什么也看不见。\n(Hôm qua là tết Trung thu, trăng hôm qua đáng lẽ phải to nhất sáng nhất năm, nhưng đáng tiếc là mặt trăng trốn sau đám mây dày ngủ say, chúng ta chả nhìn thấy gì.)"
+                        ]
+                        st.markdown(scripts[i])
+
+    # ------------------ PHẦN ĐỌC BÀI 17 ------------------
+    with t_read:
+        st.markdown("### 二、阅读 (Phần đọc)")
+        st.markdown("#### **第一部分 (Phần 1) - 选词填空**")
+        st.markdown("**第 23-26 题：**")
+        st.code("A 严格    B 梦    C 抱    D 坚持    E 入口")
+        
+        q23_26_texts = [
+            "23. 小姐，您的包不能带入馆内。\n\n（      ） 处有专门存包的地方，您可以把包放在那儿。",
+            "24. 有的父母为了让孩子更好地发展而对孩子从小就\n\n（      ） 要求，却忘记了快乐地生活对孩子才是最重要的。",
+            "25. 小时候，我们往往会有许多浪漫的理想。\n\n但是随着年龄的增长，我们天天忙工作、忙生活，\n\n那些（      ） 慢慢地离我们远去了。",
+            "26. 在昨天的羽毛球男子双打比赛中，小马和小张最后赢了比赛。\n\n赛后 他们激动地（      ） 在了一起。"
+        ]
+        q23_26_ans = ["E", "A", "B", "C"]
+        user_q23_26 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q23_26_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn", "A. 严格", "B. 梦", "C. 抱", "D. 坚持", "E. 入口"], key=f"l17_read_p1_1_{i}")
+                user_q23_26.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("**第 27-30 题：**")
+        st.code("A 剩    B 趟    C 干 (gàn)    D 温度    E 照")
+        q27_30_texts = [
+            "27. A：站在这儿（      ） 什么？\n\n怎么不进去？忘拿东西了？\n\nB：没有，我在等我儿子，我要带他去公园玩儿。",
+            "28. A：（      ） 了这么多菜没吃完，太浪费了。\n\nB：让服务员拿几个盒子来，我们 都带回去吧。",
+            "29. A：这张照片在哪儿（      ） 的？真漂亮！\n\nB：中山公园。最近天气暖和了，好多花儿都开了。",
+            "30. A：王小姐，辛苦你了，让你周末还跑一（      ）。\n\nB：不用客气，我正好经过这儿，就顺便给您带来了。"
+        ]
+        q27_30_ans = ["C", "A", "E", "B"]
+        user_q27_30 = []
+        for i, q_text in enumerate(q27_30_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn", "A. 剩", "B. 趟", "C. 干 (gàn)", "D. 温度", "E. 照"], key=f"l17_read_p1_2_{i}")
+                user_q27_30.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 排列顺序**")
+        q31_34_texts = [
+            "31.\n\nA. 不但能看到小鱼 在河里游来游去\n\nB. 这儿的河水仍然非常干净，站在河边\n\nC. 还能看到河底绿绿的水草",
+            "32.\n\nA. 这次艺术节吸引了 3000 多人参加\n\nB. 是参加人数最多的一次\n\nC. 京剧艺术节于 9 月 21 日 在北京举办",
+            "33.\n\nA. 森林是大自然不可缺少的一部分\n\nB. 我觉得这张画主要是想告诉人们\n\nC. 保护森林就是在保护地球，保护 我们共同的家",
+            "34.\n\nA. 我来北京两年了，却还没去过长城\n\nB. 所以我打算这个周末去一趟\n\nC. 有人说没去过长城就不算来过北京"
+        ]
+        q31_34_ans = ["BAC", "CAB", "BAC", "CAB"]
+        user_q31_34 = []
+        for i, q_text in enumerate(q31_34_texts):
+            st.markdown(f"<div class='question-card'>{q_text}", unsafe_allow_html=True)
+            ans = st.text_input(f"Thứ tự câu {i+31} (Ví dụ: ABC):", key=f"l17_read_p2_{i}").strip().upper()
+            user_q31_34.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 阅读理解**")
+        q35_43_questions = [
+            "35. 我向大家介绍一下，我们前面看到的就是“老虎山”。\n\n为什么叫这个名字呢？\n\n不是因为山里有老虎，而是 因为从山脚下向上看，山很像一只老虎。\n\n★ 关于“老虎山”，可以知道：",
+            "36. 社会的发展不能光看经济的发展，还要重视环境的保护。\n\n环境 如果被污染了，经济的发展 也无法为我们带来美好的生活。\n\n★ 这段话主要谈经济发展 和什么的关系？",
+            "37. 当地球上的空气还不适合生命出现的时候，海洋中就已经出现了生命。\n\n海洋中的水对生命有保护作用，生命在海水中不容易受到坏的环境的影响。\n\n★ 生命先出现在海洋里的原因是海水：",
+            "38. 很多人常为了昨天的事而烦恼，也常为了明天的事而担心，生活得并不快乐。\n\n在这一点上，动物有很多值得人 学习的地方。\n\n拿猫来说吧，它们该睡觉的时候睡觉，该吃饭的时候吃饭，好像一点儿烦恼都没有。\n\n如果人们能有它们那样的生活态度，一定会健康快乐很多。\n\n★ 根据这段话，人们应该怎么生活？",
+            "39. 很多人害怕与周围的人比较，比较不但让失败的人更难受，\n\n而且让 那些成功的人感到有压力，因为肯定还有比 他们更成功的人。\n\n但是从另一方面来看，通过比较可以发现自己的优点、缺点，\n\n使自己取得更大的成绩。\n\n★ 比较的好处是可以：",
+            "[40-41] 由于气候条件不同，世界各地植物叶子的样子也很不相同。\n\n在暖和而且空气水分很多的地方，叶子往往长得又宽又厚；\n\n在比较干、阳光特别厉害的地方，因为空气中水分少，\n\n当地植物 的叶子就会长得又瘦又长，有的甚至像针一样。\n\n40. ★ 世界各地植物叶子不同与什么有关？",
+            "41. ★ 暖和、水分多的地方，植物叶子：",
+            "[42-43] 我们虽然完全不懂小鸟的叫声代表什么意思，但仍然可能觉得很好听。\n\n虽然有的画儿看来去也看不懂，可是仍然可能觉得很美。\n\n其实美一直都在我们身边，在我们的眼睛里，\n\n尽管 我们不清楚美到底是什么，但美从来不会因为人们不懂而改变。\n\n只要我们长着一双发现美的眼睛，美就无处不在。\n\n42. ★ 美有什么特点？",
+            "43. ★ 根据这段话，我们应该："
+        ]
+        q35_43_options = [
+            ["A. 看起来像老虎", "B. 里面有动物园", "C. 只有一个入口", "D. 有很多种植物"],
+            ["A. 历史文化", "B. 科学发展", "C. 环境保护", "D. 城市管理"],
+            ["A. 很暖和", "B. 有吃的", "C. 能改变环境", "D. 能保护它们"],
+            ["A. 多考虑将来", "B. 别忘记以前", "C. 跟动物一样", "D. 不要想太多"],
+            ["A. 引起竞争", "B. 赢得同情", "C. 原谅别人", "D. 了解自己"],
+            ["A. 长的速度", "B. 气候条件", "C. 经济发展", "D. 植物间的距离"],
+            ["A. 很长", "B. 很宽", "C. 很亮", "D. 很多"],
+            ["A. 有清楚的意思", "B. 有相同的标准", "C. 很容易被理解", "D. 不因为人改变"],
+            ["A. 学习跟鸟交流", "B. 从画中理解美", "C. 欣赏身边的美", "D. 好好保护眼睛"]
+        ]
+        q35_43_ans = ["A", "C", "D", "D", "D", "B", "B", "D", "C"]
+        user_q35_43 = []
+        for i in range(9):
+            st.markdown(f"<div class='question-card'>{q35_43_questions[i]}", unsafe_allow_html=True)
+            ans = st.selectbox(f"Đáp án câu {i+35}:", ["Chưa chọn"] + q35_43_options[i], key=f"l17_read_p3_{i}")
+            user_q35_43.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        if st.button("🚀 NỘP BÀI PHẦN ĐỌC", key="l17_btn_sub_read"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(4):
+                    if user_q23_26[i] == q23_26_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q27_30[i] == q27_30_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q31_34[i] == q31_34_ans[i]: correct_cnt += 1
+                for i in range(9):
+                    if user_q35_43[i] == q35_43_ans[i]: correct_cnt += 1
+                st.session_state.l17_r_sub = True
+                st.session_state.l17_r_score = f"{correct_cnt}/21"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l17_r_score}.")
+                send_results_to_gsheet(student_name, "Bài 17", "PHẦN ĐỌC", st.session_state.l17_r_score)
+
+        if st.session_state.l17_r_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(4):
+                if user_q23_26[i] != q23_26_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+23} sai:</span> {q23_26_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q23_26_ans[i]}**")
+            for i in range(4):
+                if user_q27_30[i] != q27_30_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+27} sai:</span> {q27_30_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q27_30_ans[i]}**")
+
+    # ------------------ PHẦN VIẾT BÀI 17 ------------------
+    with t_write:
+        st.markdown("### 三、书写 (Phần viết)")
+        st.markdown("#### **第一部分 (Phần 1) - Sắp xếp câu hoàn chỉnh**")
+        st.warning("⚠️ Chú ý: Phần viết được chấm tuyệt đối nghiêm ngặt. Sai bất kỳ 1 chữ hoặc 1 dấu câu nào cũng tính là sai hoàn toàn cả câu.")
+        
+        q44_48_words = [
+            "44. 把 / 一下 / 的 / 数字 / 排列 / 剩下",
+            "45. 按照 / 同学们 / 顺序 / 排好 / 请 / 队",
+            "46. 竞争 / 经济 / 推动 / 发展 / 鼓励 / 能",
+            "47. 一万公里 / 这两个 / 距离 / 的 / 城市 / 是",
+            "48. 应该 / 老师们 / 自己的 / 课 / 使 / 变得 / 活泼"
+        ]
+        q44_48_acceptable_ans = [
+            ["把剩下的数字排列一下。"],
+            ["请同学们按照顺序排好队。"],
+            ["鼓励竞争能推动经济发展。"],
+            ["这两个城市的距离是一万公里。"],
+            ["老师们应该使自己的课变得活泼。"]
+        ]
+        user_q44_48 = []
+        for i, words in enumerate(q44_48_words):
+            st.markdown(f"<div class='question-card'><strong>Câu {i+44}:</strong> {words}", unsafe_allow_html=True)
+            ans = st.text_input("Nhập câu hoàn chỉnh của bạn tại đây:", key=f"l17_write_p1_{i}").strip()
+            user_q44_48.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - Nhìn tranh đặt câu (Tự luận đối chiếu gợi ý)**")
+        st.markdown("<div class='question-card'><strong>Câu 49:</strong> Tranh hai chú chó con dễ thương. Từ gợi ý: <strong>毛</strong></div>", unsafe_allow_html=True)
+        user_q49 = st.text_area("Viết câu của bạn:", key="l17_write_p2_49")
+        st.markdown("<div class='question-card'><strong>Câu 50:</strong> Tranh biển chỉ đường chỉ Thiên An Môn 2km. Từ gợi ý: <strong>公里</strong></div>", unsafe_allow_html=True)
+        user_q50 = st.text_area("Viết câu của bạn:", key="l17_write_p2_50")
+
+        if st.button("🚀 NỘP BÀI PHẦN VIẾT", key="l17_btn_sub_write"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    user_ans = user_q44_48[i].strip()
+                    matched = False
+                    for possible_ans in q44_48_acceptable_ans[i]:
+                        if user_ans == possible_ans.strip():
+                            matched = True
+                            break
+                    if matched: correct_cnt += 1
+                st.session_state.l17_w_sub = True
+                st.session_state.l17_w_score = f"{correct_cnt}/5"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l17_w_score}.")
+                send_results_to_gsheet(student_name, "Bài 17", "PHẦN VIẾT", st.session_state.l17_w_score)
+
+        if st.session_state.l17_w_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(5):
+                user_ans = user_q44_48[i].strip()
+                matched = False
+                for possible_ans in q44_48_acceptable_ans[i]:
+                    if user_ans == possible_ans.strip():
+                        matched = True
+                        break
+                if not matched:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+44} viết chưa chính xác:</span>", unsafe_allow_html=True)
+                    st.markdown(f"Đáp án của bạn: `{user_q44_48[i]}`")
+                    st.markdown(f"👉 Đáp án đúng: **{q44_48_acceptable_ans[i][0]}**")
+
+
+
+def show_lesson_18(student_name):
+    st.markdown("### 📚 BÀI 18: 科技与世界")
+    
+    if 'l18_l_sub' not in st.session_state: st.session_state.l18_l_sub = False
+    if 'l18_r_sub' not in st.session_state: st.session_state.l18_r_sub = False
+    if 'l18_w_sub' not in st.session_state: st.session_state.l18_w_sub = False
+
+    t_lis, t_read, t_write = st.tabs(["PHẦN NGHE", "PHẦN ĐỌC", "PHẦN VIẾT"])
+
+    # ------------------ PHẦN NGHE BÀI 18 ------------------
+    with t_lis:
+        st.markdown("### 一、听力 (Phần nghe)")
+        st.markdown("#### **第一部分 (Phần 1) - 判断对错**")
+        play_audio("18-1")
+        
+        q1_5_text = [
+            "1. ★ 地址填错地方了。",
+            "2. ★ 他们要坐地铁。",
+            "3. ★ 明天中午有大雪。",
+            "4. ★ 遇到危险时要冷静。",
+            "5. ★ 黄河是中国的“母亲河”。"
+        ]
+        q1_5_ans = ["✔", "✘", "✘", "✔", "✔"]
+        user_q1_5 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q1_5_text):
+            target_col = col1 if i < 3 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.radio(f"Chọn câu {i+1}:", ["Chưa chọn", "✔ (Đúng)", "✘ (Sai)"], key=f"l18_lis_p1_{i}")
+                user_q1_5.append(ans)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 单项选择**")
+        play_audio("18-2")
+        
+        q6_12_options = [
+            ["A. 没有邮件", "B. 电脑坏了", "C. 电话有问题", "D. 密码错了"],
+            ["A. 在超市", "B. 没带钱", "C. 在找人", "D. 迷路了"],
+            ["A. 寄信", "B. 写地址", "C. 找信封", "D. 发邮件"],
+            ["A. 做菜", "B. 咖啡", "C. 面条", "D. 葡萄酒"],
+            ["A. 非常困", "B. 发烧了", "C. 没起床", "D. 受欢迎"],
+            ["A. 高兴", "B. 无聊", "C. 担心", "D. 轻松"],
+            ["A. 借钱", "B. 买饼干", "C. 找钥匙", "D. 问路"]
+        ]
+        q6_12_ans = ["D", "C", "C", "A", "A", "C", "A"]
+        user_q6_12 = []
+        col1, col2 = st.columns(2)
+        for i in range(7):
+            target_col = col1 if i < 4 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+6}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+6}:", ["Chưa chọn"] + q6_12_options[i], key=f"l18_lis_p2_{i}")
+                user_q6_12.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 单项选择**")
+        play_audio("18-3")
+        
+        q13_22_options = [
+            ["A. 大学毕业了", "B. 找到工作了", "C. 考上硕士了", "D. 做教育工作"],
+            ["A. 火车站", "B. 机场", "C. 公园", "D. 图书馆"],
+            ["A. 网站有问题", "B. 网址错了", "C. 上网速度不快", "D. 女的的电脑坏了"],
+            ["A. 是新手", "B. 开车慢", "C. 想停车", "D. 技术好"],
+            ["A. 学校", "B. 作者", "C. 办公室", "D. 中学生"],
+            ["A. 介绍科学知识", "B. 特别有意思", "C. 赚了很多钱", "D. 解释了很多梦"],
+            ["A. 开始时间", "B. 完成的情况", "C. 做事的顺序", "D. 别浪费时间"],
+            ["A. 工作总结", "B. 管理效果", "C. 做计划的方法", "D. 时间的重要性"],
+            ["A. 为了赚钱", "B. 减少污染", "C. 衣服太脏", "D. 洗衣服太辛苦"],
+            ["A. 麻烦的好处", "B. 麻烦的原因", "C. 爬楼的快乐", "D. 交通工具的特点"]
+        ]
+        q13_22_ans = ["C", "D", "D", "A", "B", "C", "C", "D", "A", "A"]
+        user_q13_22 = []
+        col1, col2 = st.columns(2)
+        for i in range(10):
+            target_col = col1 if i < 5 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+13}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+13}:", ["Chưa chọn"] + q13_22_options[i], key=f"l18_lis_p3_{i}")
+                user_q13_22.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN NGHE", key="l18_btn_sub_lis"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                    if u_v == q1_5_ans[i]: correct_cnt += 1
+                for i in range(7):
+                    if user_q6_12[i] == q6_12_ans[i]: correct_cnt += 1
+                for i in range(10):
+                    if user_q13_22[i] == q13_22_ans[i]: correct_cnt += 1
+                st.session_state.l18_l_sub = True
+                st.session_state.l18_l_score = f"{correct_cnt}/22"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l18_l_score}.")
+                send_results_to_gsheet(student_name, "Bài 18", "PHẦN NGHE", st.session_state.l18_l_score)
+
+        if st.session_state.l18_l_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            # Phần 1
+            for i in range(5):
+                u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                if u_v != q1_5_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+1} sai:</span> {q1_5_text[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q1_5_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+1}"):
+                        scripts = [
+                            "先生，您把收件人和寄件人的地址填反了，这儿应该填您自己的地址。我再给您一张单子，您重新填一下吧。\n(Thưa ông, ông đã điền ngược địa chỉ người nhận và người gửi rồi, chỗ này nên điền địa chỉ của ông. Tôi đưa ông một tờ đơn khác, ông điền lại nhé.)",
+                            "姐，咱们弄错方向了，去西边的公共汽车应该过马路去那边坐。正好前边有个天桥，我们从那儿过马路吧。\n(Chị ơi, chúng mình đi nhầm hướng rồi, xe buýt đi về phía Tây phải sang bên kia đường bắt. Vừa hay phía trước có cầu vượt, mình qua đường từ đó đi.)",
+                            "由于冷空气南下，我省明天将迎来大风降温天气，有些地方还会有小到中雨，交通会受到一定影响，听众朋友们出行时一定要注意安全。\n(Do không khí lạnh tràn về phía Nam, tỉnh ta ngày mai sẽ đón thời tiết gió lớn hạ nhiệt, có nơi có mưa nhỏ đến mưa vừa, giao thông bị ảnh hưởng, thính giả chú ý an toàn khi ra ngoài.)",
+                            "遇到危险时，哭不能解决任何问题，你应该想办法向别人求助。但在这之前，你必须先让自己冷静下来。\n(Khi gặp nguy hiểm, khóc không giải quyết được vấn đề gì, bạn nên tìm cách cầu cứu người khác. Nhưng trước đó, bạn phải bình tĩnh lại.)",
+                            "黄河是中国第二大河，它有 5464 公里长，人们把它叫作“母亲河”。从地图上看，它就像一个大大的“几”字。\n(Sông Hoàng Hà là con sông lớn thứ hai ở Trung Quốc, dài 5464 km, người ta gọi nó là 'Sông Mẹ'. Nhìn trên bản đồ, nó giống như một chữ '几' lớn.)"
+                        ]
+                        st.markdown(scripts[i])
+
+            # Phần 2
+            for i in range(7):
+                if user_q6_12[i] != q6_12_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+6} sai.</span> Lựa chọn của bạn: `{user_q6_12[i]}`", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q6_12_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+6}"):
+                        scripts_p2 = [
+                            "女：你叔叔刚打电话来说给你发了个电子邮件，让你查收。\n男：我正在上邮箱，可一直进不去，真奇怪，总说我的密码有错，没错啊。\n问：男的为什么感到奇怪？",
+                            "男：喂，你在哪儿呢？我已经到公园了，怎么看不到你啊？\n女：我在公园旁边的超市呢，正好我买了一箱矿泉水，你来接我一下吧。\n问：关于男的，下列哪个正确？",
+                            "男：你那儿有大一点儿的信封吗？这个太小了。\n女：稍等一下，我发完这封电子邮件就给你找。\n问：男的让女的做什么？",
+                            "男：你尝一下，这个菜味道怎么样？\n女：我尝了，稍微有点儿咸，是不是盐放多了？\n问：他们在谈什么？",
+                            "男：你困了就先去睡一会儿吧，等比赛开始了，我再叫你起来接着看。\n女：好的，我实在受不了了，先去躺会儿。\n问：女的怎么了？",
+                            "女：做得怎么样了？今天能解决这个问题吗？\n男：情况比我们想的复杂得多，还有一个技术问题不知道怎么办，今天恐怕完不了了。\n问：男的现在心情怎么样？",
+                            "男：我想买这本词典，可出门忘带钱包了，你能不能先借我一点儿？一会儿回去还你。\n女：没问题。高老师，您要多少？\n问：男的在做什么？"
+                        ]
+                        st.markdown(scripts_p2[i])
+
+            # Phần 3
+            for i in range(10):
+                if user_q13_22[i] != q13_22_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+13} sai.</span> Lựa chọn của bạn: `{user_q13_22[i]}`", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q13_22_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+13}"):
+                        scripts_p3 = [
+                            "女：大学毕业后就没联系了，你现在在哪儿工作呢？\n男：毕业后在老家工作了一年，接着又考上了北京大学，现在在读研究生。\n女：真厉害！是硕士了。你读什么专业？几年？\n男：教育学，三年。\n问：女的为什么说男的很厉害？",
+                            "男：明天见面的地点改在东门了？\n女：是，从那边去国家图书馆方便一些。\n男：那我通知班里的同学。时间变了吗？\n女：没变，还是上午八点。\n问：他们明天要去哪儿？",
+                            "女：这个网站地址是不是错的？试了好几遍都打不开。\n男：你把网址发过来，我试一下。\n女：怎么样？你那儿能打开吗？\n男：可以，速度挺快的，是不是你电脑有问题？\n问：根据对话，可以知道：",
+                            "女：危险！你开得太快了。\n男：好吧，好吧，我开慢点儿。\n女：你现在把车停下，我来开，我真受不了你了！\n男：让我再开会儿。你不是也刚学会几天吗？自己也是个新手。\n女：至少比你开得慢，技术比你好。\n问：通过对话，可以知道男的：",
+                            "女：你联系那位作者了吗？\n男：联系了，她竟然是一位在校大学生，没想到她那么年轻。\n女：她同意和我们聊一聊了？\n男：是的，暂定在下星期一，她上午九点来我们办公室谈。\n问：通过对话，可以知道男的联系了：",
+                            "男：我昨天晚上做了一个特别有意思的梦，梦到家里有好多好多水，高兴死我了。\n女：这有什么可高兴的？晚上睡觉时，身体感觉到什么，人就容易梦到什么内容。\n男：早上一醒，我就去查了《周公解梦》，书上说梦到水，说明会有很大一笔收入呢！\n女：那你慢慢等着吧，那本书上的内容一点儿也不科学。\n问：关于《周公解梦》，下列哪个最可能正确？",
+                            "每个人都应该学会管理时间，而做计划表、严格按照计划做事是有效管理时间的第一步。在做计划表时首先要注意把重要的事安排在前面，除此之外，还要写明完成时间，这样才能做到不浪费一分一秒。\n19．做计划表时，首先要注意什么？\n20．这段话主要谈的是什么？",
+                            "每个人都应该学会管理时间，而做计划表、严格按照计划做事是有效管理时间的第一步。在做计划表时首先要注意把重要的事安排在前面，除此之外，还要写明完成时间，这样才能做到不浪费一分一秒。\n19．做计划表时，首先要注意什么？\n20．这段话主要谈的是什么？",
+                            "因为有些人觉得用手写字麻烦，于是有了打字机；因为有些人觉得每天爬楼麻烦，于是有了电梯；因为有些人觉得洗衣服麻烦，于是有了洗衣机；同样因为有些人觉得走路又累又麻烦，才有了各种交通工具。所以，觉得麻烦不一定是件坏事。\n21．根据这段话，为什么会出现洗衣机？\n22．这段话主要想告诉我们什么？",
+                            "因为有些人觉得用手写字麻烦，于是有了打字机；因为有些人觉得每天爬楼麻烦，于是有了电梯；因为有些人觉得洗衣服麻烦，于是有了洗衣机；同样因为有些人觉得走路又累又麻烦，才有了各种交通工具。所以，觉得麻烦不一定是件坏事。\n21．根据这段话，为什么会出现洗衣机？\n22．这段话主要想告诉我们什么？"
+                        ]
+                        st.markdown(scripts_p3[i])
+
+    # ------------------ PHẦN ĐỌC BÀI 18 ------------------
+    with t_read:
+        st.markdown("### 二、阅读 (Phần đọc)")
+        st.markdown("#### **第一部分 (Phần 1) - 选词填空**")
+        st.markdown("**第 23-26 题：**")
+        st.code("A 举    B 是否    C 火    D 坚持    E 警察")
+        
+        q23_26_texts = [
+            "23. 校门口右边那家饭馆的菜做得确实好吃，\n\n吃饭时间经常有人排队等座，生意越来越（      ）了。",
+            "24. 小时候我的理想是当一名（      ），\n\n但现在我却成了一个动物园管理员，跟熊猫和老虎成了好朋友。",
+            "25. 随着年龄的增长，我们会遇到许多机会，\n\n但问题是当它来到你身边时，你（      ）已经做好了准备。",
+            "26. 每个人都有自己特别感兴趣的东西，\n\n（      ）个例子，作家爱讲故事，演员爱表演。\n\n我们只有了解了自己的兴趣爱好后，才能更好地发展自己。"
+        ]
+        q23_26_ans = ["C", "E", "B", "A"]
+        user_q23_26 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q23_26_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn", "A. 举", "B. 是否", "C. 火", "D. 坚持", "E. 警察"], key=f"l18_read_p1_1_{i}")
+                user_q23_26.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("**第 27-30 题：**")
+        st.code("A 咸    B 桥    C 温度    D 收    E 座")
+        q27_30_texts = [
+            "27. A：我刚从会议室过来，怎么一个人也没有？\n\nB：对不起，今天的会议改到明天上午了，您没（      ）到通知吗？",
+            "28. A：中午去海边游泳了？感觉怎么样？\n\nB：还行，就是海水太（      ）了。",
+            "29. A：这儿的景色真美！帮我照张相吧。\n\nB：好的，你稍微往左边站一点儿，我帮你把后面的大（      ）也照上。",
+            "30. A：北京有一（      ）香山，非常有名。每到秋天，满山都是红叶，景色特别漂亮。\n\nB：是吗？那我有机会一定要去看看。"
+        ]
+        q27_30_ans = ["D", "A", "B", "E"]
+        user_q27_30 = []
+        for i, q_text in enumerate(q27_30_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn", "A. 咸", "B. 桥", "C. 温度", "D. 收", "E. 座"], key=f"l18_read_p1_2_{i}")
+                user_q27_30.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 排列顺序**")
+        q31_34_texts = [
+            "31.\n\nA. 因为无论对自己还是对其他人\n\nB. 司机喝酒后不允许开车\n\nC. 酒后开车都是非常危险的",
+            "32.\n\nA. 即使已经过去了几个世纪\n\nB. 仍然受到读者们的喜爱\n\nC. 这个美丽的爱情故事，感动过无数人",
+            "33.\n\nA. 祝 homework/祝 revolutions/祝 national/祝他们在今后的生活中\n\nB. 让我们一起举杯\n\nC. 一切顺利，永远幸福",
+            "34.\n\nA. 只要找出文章中的关键信息\n\nB. 就可以在短时间内了解文章的大意\n\nC. 做到快速阅读其实不难，简单来说"
+        ]
+        # Let's fix text of 33 in q31_34_texts:
+        q31_34_texts[2] = "33.\n\nA. 祝他们在今后的生活中\n\nB. 让我们一起举杯\n\nC. 一切顺利，永远幸福"
+        
+        q31_34_ans = ["BAC", "CAB", "BAC", "CAB"]
+        user_q31_34 = []
+        for i, q_text in enumerate(q31_34_texts):
+            st.markdown(f"<div class='question-card'>{q_text}", unsafe_allow_html=True)
+            ans = st.text_input(f"Thứ tự câu {i+31} (Ví dụ: ABC):", key=f"l18_read_p2_{i}").strip().upper()
+            user_q31_34.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 阅读理解**")
+        q35_43_questions = [
+            "35. 一般情况下，飞机起飞的方向是和风向相反的，\n这样飞机可以得到更多向上的助力；\n另外，相反方向的风能使飞机的离地速度减慢，这样能够保证安全。\n\n★ 飞机起飞的方向应该：",
+            "36. 森林里有一种奇特的植物，它开的花比普通的花大很多。\n这种植物会吸引来一些小动物，当小动物走近花时，植物就会把它们吃掉。\n\n★ 这种植物：",
+            "37. 二三十年前很多人还有通过写信交友的习惯，\n但是进入 21 世纪以后，随着科学技术的发展，\n现在几乎没有人会选择写信了，人们更愿意上网交流。\n\n★ 现在人们更愿意：",
+            "38. 小姐，我们这种矿泉水取自雪山，不仅好喝，\n用它来洗脸对皮肤也有好处，所以价格要比其他矿泉水贵一些。\n\n★ 这种矿泉水的特点是：",
+            "39. 随着科学技术的发展，距离对人与人之间交流的影响越来越小了，\n只要打个电话或者发个电子邮件，就能联系到千里之外的人。\n\n★ 科技发展带来的好处是：",
+            "[40-41] 昨天下午女朋友突然想让我陪她去逛街买衣服，\n于是她就开始准备起来了。\n她先洗了个澡，接着又在脸上画了半天，过了一个小时了她还没弄好。\n我提醒她商场六点关门，她说马上就好，我只能继续等着。\n结果，等我们到商场时，商场已经关门了。\n她很生气，说我没注意时间，真让我受不了。\n\n40. ★ 出门前女朋友在做什么？",
+            "41. ★ 女朋友为什么生气？",
+            "[42-43] 不知道从什么时候开始，我们的生活已经离不开密码：\n用银行卡取钱需要密码，打开手机需要密码，\n在互联网上收发邮件、聊天需要密码，有时候甚至连开门都需要密码。\n密码让我们的生活变得更方便安全，可除此以外，它也给我们增加了不少烦恼。\n试着想一想，如果谁不小心忘记了那些密码，他的生活会变成什么样。\n\n42. ★ 人们需要记住什么？",
+            "43. ★ 这段话主要讲的是："
+        ]
+        q35_43_options = [
+            ["A. 向南", "B. 向北", "C. 与风向相反", "D. 与风向相同"],
+            ["A. 会吃小动物", "B. 花很漂亮", "C. 夏天才开花", "D. 没有叶子"],
+            ["A. 发短信", "B. 写日记", "C. 上网聊", "D. 看杂志"],
+            ["A. 干净", "B. 有点儿咸", "C. 来自海洋", "D. 洗脸对皮肤好"],
+            ["A. 减少误会", "B. 减少污染", "C. 交流更方便", "D. 增加安全感"],
+            ["A. 画画儿", "B. 打扫房间", "C. 打扮自己", "D. 等朋友来"],
+            ["A. 朋友来晚了", "B. 忘带钥匙了", "C. 衣服不打折", "D. 商场关门了"],
+            ["A. 银行卡", "B. 地址", "C. 密码", "D. 手机号码"],
+            ["A. 科学技术的发展", "B. 互联网的优缺点", "C. 密码对人的影响", "D. 哪些地方用密码"]
+        ]
+        q35_43_ans = ["C", "A", "C", "D", "C", "C", "D", "C", "C"]
+        user_q35_43 = []
+        for i in range(9):
+            st.markdown(f"<div class='question-card'>{q35_43_questions[i]}", unsafe_allow_html=True)
+            ans = st.selectbox(f"Đáp án câu {i+35}:", ["Chưa chọn"] + q35_43_options[i], key=f"l18_read_p3_{i}")
+            user_q35_43.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN ĐỌC", key="l18_btn_sub_read"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(4):
+                    if user_q23_26[i] == q23_26_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q27_30[i] == q27_30_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q31_34[i] == q31_34_ans[i]: correct_cnt += 1
+                for i in range(9):
+                    if user_q35_43[i] == q35_43_ans[i]: correct_cnt += 1
+                st.session_state.l18_r_sub = True
+                st.session_state.l18_r_score = f"{correct_cnt}/21"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l18_r_score}.")
+                send_results_to_gsheet(student_name, "Bài 18", "PHẦN ĐỌC", st.session_state.l18_r_score)
+
+        if st.session_state.l18_r_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(4):
+                if user_q23_26[i] != q23_26_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+23} sai:</span> {q23_26_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q23_26_ans[i]}**")
+            for i in range(4):
+                if user_q27_30[i] != q27_30_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+27} sai:</span> {q27_30_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q27_30_ans[i]}**")
+            for i in range(4):
+                if user_q31_34[i] != q31_34_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+31} sai:</span>", unsafe_allow_html=True)
+                    st.markdown(f"👉 Lựa chọn của bạn: `{user_q31_34[i]}` | Đáp án đúng: **{q31_34_ans[i]}**")
+            for i in range(9):
+                if user_q35_43[i] != q35_43_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+35} sai:</span> {q35_43_questions[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Lựa chọn của bạn: `{user_q35_43[i]}` | Đáp án đúng: **{q35_43_ans[i]}**")
+
+    # ------------------ PHẦN VIẾT BÀI 18 ------------------
+    with t_write:
+        st.markdown("### 三、书写 (Phần viết)")
+        st.markdown("#### **第一部分 (Phần 1) - Sắp xếp câu hoàn chỉnh**")
+        st.warning("⚠️ Chú ý: Phần viết được chấm tuyệt đối nghiêm ngặt. Sai bất kỳ 1 chữ hoặc 1 dấu câu nào cũng tính là sai hoàn toàn cả câu.")
+        
+        q44_48_words = [
+            "44. 飞机 / 最 / 被认为 / 是 / 安全的 / 交通方式",
+            "45. 一个 / 责任感 / 警察 / 有 / 优秀的 / 需要",
+            "46. 我顺便 / 回来的路上 / 邮局 / 去 / 趟 / 了",
+            "47. 历史教授 / 著名的 / 是位 / 作者 / 这本书 / 的",
+            "48. 密码 / 你爸 / 把 / 信用卡的 / 了 / 改"
+        ]
+        
+        q44_48_acceptable_ans = [
+            ["飞机被认为是最安全的交通方式。"],
+            ["一个优秀的警察需要有责任感。", "优秀的警察需要有一个责任感。"],
+            ["回来的路上我顺便去了趟邮局。", "我回来的路上顺便去了趟邮局。"],
+            ["这本书的作者是位著名的历史教授。", "著名的历史教授是这本书的作者。"],
+            ["你爸把信用卡的密码改了。"]
+        ]
+        
+        user_q44_48 = []
+        for i, words in enumerate(q44_48_words):
+            st.markdown(f"<div class='question-card'><strong>Câu {i+44}:</strong> {words}", unsafe_allow_html=True)
+            ans = st.text_input("Nhập câu hoàn chỉnh của bạn tại đây:", key=f"l18_write_p1_{i}").strip()
+            user_q44_48.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - Nhìn tranh đặt câu (Tự luận đối chiếu gợi ý)**")
+        
+        st.markdown("""
+        <div class='question-card'>
+            <strong>Câu 49:</strong> Tranh một chiếc飞机在跑道降落。<br>
+            Từ gợi ý: <strong>降落</strong>
+        </div>
+        """, unsafe_allow_html=True)
+        user_q49 = st.text_area("Viết câu tự luận của bạn tại đây:", key="l18_write_p2_49")
+        
+        st.markdown("""
+        <div class='question-card'>
+            <strong>Câu 50:</strong> Tranh một người đi trong rừng bị lạc.<br>
+            Từ gợi ý: <strong>迷路</strong>
+        </div>
+        """, unsafe_allow_html=True)
+        user_q50 = st.text_area("Viết câu tự luận của bạn tại đây:", key="l18_write_p2_50")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN VIẾT", key="l18_btn_sub_write"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    user_ans = user_q44_48[i].strip()
+                    matched = False
+                    for possible_ans in q44_48_acceptable_ans[i]:
+                        if user_ans == possible_ans.strip():
+                            matched = True
+                            break
+                    if matched:
+                        correct_cnt += 1
+                        
+                st.session_state.l18_w_sub = True
+                st.session_state.l18_w_score = f"{correct_cnt}/5"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l18_w_score}.")
+                send_results_to_gsheet(student_name, "Bài 18", "PHẦN VIẾT", st.session_state.l18_w_score)
+
+        if st.session_state.l18_w_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(5):
+                user_ans = user_q44_48[i].strip()
+                matched = False
+                for possible_ans in q44_48_acceptable_ans[i]:
+                    if user_ans == possible_ans.strip():
+                        matched = True
+                        break
+                if not matched:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+44} viết chưa chính xác:</span>", unsafe_allow_html=True)
+                    st.markdown(f"Đáp án của bạn: `{user_q44_48[i]}`")
+                    st.markdown(f"👉 Đáp án đúng: **{q44_48_acceptable_ans[i][0]}**")
+                    
+            st.markdown("---")
+            st.markdown("#### 💡 CÂU GỢI Ý MẪU CHO PHẦN ĐẶT CÂU THEO TRANH:")
+            st.markdown("- **Câu 49 (降落):** `飞机马上就要降落了，一会儿告诉他我们在机场门口等他。` *(Máy bay sắp hạ cánh rồi, lát nữa bảo anh ấy chúng ta đợi ở cửa sân bay nhé.)*")
+            st.markdown("- **Câu 50 (迷路):** `那座山小路特别多，第一次来的人很容易迷路。` *(Ngọn núi đó rất nhiều đường nhỏ, người mới tới lần đầu rất dễ bị lạc.)*")
+
+
+# ==============================================================================
+# HỆ THỐNG MENU VÀ TỰ ĐỘNG SẮP XẾP BÀI MỚI LÊN TRƯỚC (SCALABLE ARCHITECTURE)
+# ==============================================================================
+
+# Khi bạn thêm bài học mới (ví dụ Bài 18, 19, 20...), bạn chỉ cần định nghĩa hàm tương tự như trên
+# rồi khai báo thêm vào dictionary LESSONS dưới đây.
+# Bộ máy Streamlit sẽ tự động hiển thị bài học mới nhất lên đầu tiên trong ô chọn bài tập!
+
+
+def show_lesson_19(student_name):
+    if 'l19_l_sub' not in st.session_state: st.session_state.l19_l_sub = False
+    if 'l19_r_sub' not in st.session_state: st.session_state.l19_r_sub = False
+    if 'l19_w_sub' not in st.session_state: st.session_state.l19_w_sub = False
+
+    t_lis, t_read, t_write = st.tabs(["PHẦN NGHE", "PHẦN ĐỌC", "PHẦN VIẾT"])
+
+    # ------------------ PHẦN NGHE BÀI 19 ------------------
+    with t_lis:
+        st.markdown("### 一、听力 (Phần nghe)")
+        
+        # --- PART 1 ---
+        st.markdown("#### **第一部分 (Phần 1) - 判断对错**")
+        play_audio("19-1")
+        
+        q1_5_text = [
+            "1. ★ 想重新让人相信很难。",
+            "2. ★ 他在理发店。",
+            "3. ★ 他想租个大房子。",
+            "4. ★ 人们可以通过音乐交流感情。",
+            "5. ★ 他刚来这儿不久。"
+        ]
+        q1_5_ans = ["✔", "✔", "✘", "✔", "✘"]
+        user_q1_5 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q1_5_text):
+            target_col = col1 if i < 3 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.radio(f"Chọn câu {i+1}:", ["Chưa chọn", "✔ (Đúng)", "✘ (Sai)"], key=f"l19_lis_p1_{i}")
+                user_q1_5.append(ans)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        # --- PART 2 ---
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 单项选择**")
+        play_audio("19-2")
+        
+        q6_12_options = [
+            ["A. 不愿意", "B. 同意教男的", "C. 没时间", "D. 打得不好"],
+            ["A. 迟到了", "B. 去打印材料", "C. 没听到", "D. 没带材料"],
+            ["A. 爱吃饺子", "B. 鼻子受了伤", "C. 肚子饿了", "D. 刚打完网球"],
+            ["A. 衣服很贵", "B. 男的觉得热", "C. 窗户坏了", "D. 女的穿得多"],
+            ["A. 手表", "B. 包", "C. 出租车", "D. 钱包"],
+            ["A. 重新做", "B. 增加一列", "C. 打印表格", "D. 减少一列"],
+            ["A. 太亮了", "B. 坏了", "C. 太小了", "D. 很好看"]
+        ]
+        q6_12_ans = ["B", "B", "C", "B", "A", "B", "C"]
+        user_q6_12 = []
+        col1, col2 = st.columns(2)
+        for i in range(7):
+            target_col = col1 if i < 4 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+6}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+6}:", ["Chưa chọn"] + q6_12_options[i], key=f"l19_lis_p2_{i}")
+                user_q6_12.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        # --- PART 3 ---
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 单项选择**")
+        play_audio("19-3")
+        
+        q13_22_options = [
+            ["A. 大使馆", "B. 银行", "C. 学校", "D. 医院"],
+            ["A. 体育馆", "B. 电影院", "C. 宾馆", "D. 图书馆"],
+            ["A. 带家具的", "B. 购物方便的", "C. 房租便宜的", "D. 离学校近的"],
+            ["A. 图书馆", "B. 学校东门", "C. 商店", "D. 一楼"],
+            ["A. 桌子", "B. 沙发", "C. 冰箱", "D. 饮料"],
+            ["A. 年龄小", "B. 有基础", "C. 胳膊长", "D. 长得高"],
+            ["A. 喜欢功夫", "B. 个子不高", "C. 十六岁了", "D. 考试第一"],
+            ["A. 五十五岁", "B. 十五岁", "C. 五十六岁", "D. 十六岁"],
+            ["A. 同事", "B. 同学", "C. 学生", "D. 老师"],
+            ["A. 没上班", "B. 看错了", "C. 速度慢", "D. 声音小"]
+        ]
+        q13_22_ans = ["D", "B", "C", "C", "B", "B", "B", "B", "A", "B"]
+        user_q13_22 = []
+        col1, col2 = st.columns(2)
+        for i in range(10):
+            target_col = col1 if i < 5 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>Câu {i+13}:</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Đáp án câu {i+13}:", ["Chưa chọn"] + q13_22_options[i], key=f"l19_lis_p3_{i}")
+                user_q13_22.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN NGHE", key="l19_btn_sub_lis"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                    if u_v == q1_5_ans[i]: correct_cnt += 1
+                for i in range(7):
+                    if user_q6_12[i] == q6_12_ans[i]: correct_cnt += 1
+                for i in range(10):
+                    if user_q13_22[i] == q13_22_ans[i]: correct_cnt += 1
+                st.session_state.l19_l_sub = True
+                st.session_state.l19_l_score = f"{correct_cnt}/22"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l19_l_score}.")
+                send_results_to_gsheet(student_name, "Bài 19", "PHẦN NGHE", st.session_state.l19_l_score)
+
+        if st.session_state.l19_l_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            scripts_p1 = [
+                "别以为做错了事道个歉，说句对不起就行了。\n因为得到别人的原谅很容易，但要重新让别人再相信你却很难。\n(Đừng tưởng làm sai điều gì chỉ cần xin lỗi một tiếng là xong. Vì nhận được sự tha thứ của người khác thì dễ, nhưng để họ lại tin tưởng bạn thì rất khó.)",
+                "你好，我想理个发，稍微短一点儿就可以。\n一会儿我还有些事要办，所以麻烦你快一点儿。\n(Xin chào, tôi muốn cắt tóc, ngắn một chút là được. Lát nữa tôi còn có chút việc phải làm, nên phiền bạn nhanh một chút.)",
+                "我想租一个交通方便的房子，离地铁站近点儿，\n但是周围环境不能太吵，房租最好也别太贵。当然，如果房东比较友好，那就更好了。\n(Tôi muốn thuê một căn nhà giao thông thuận tiện, gần ga tàu điện ngầm một chút, nhưng môi trường xung quanh không được quá ồn, tiền thuê nhà tốt nhất cũng đừng quá đắt. Tất nhiên nếu chủ nhà thân thiện thì càng tốt.)",
+                "音乐不仅是一门艺术，也是一种语言。\n人们对音乐的喜爱与国籍无关。\n通过音乐，不同国家的人可以交流感情，增进了解。\n(Âm nhạc không chỉ là nghệ thuật mà còn là một ngôn ngữ. Sự yêu thích âm nhạc của con người không liên quan đến quốc tịch. Thông qua âm nhạc, con người ở các quốc gia khác nhau có thể giao lưu cảm xúc, tăng cường hiểu biết.)",
+                "他虽然不是在这儿出生的，但却是在这儿长大的。\n他三岁跟父亲母亲一起来到这儿，就再也没离开过。\n因此，他对这个地方感情很深。\n(Anh ấy tuy không sinh ra ở đây nhưng lại lớn lên ở đây. Anh ấy theo bố mẹ đến đây từ năm ba tuổi và chưa từng rời đi. Do đó, tình cảm của anh ấy dành cho nơi này rất sâu sắc.)"
+            ]
+            for i in range(5):
+                u_v = "✔" if "✔" in user_q1_5[i] else "✘" if "✘" in user_q1_5[i] else "Chưa chọn"
+                if u_v != q1_5_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+1} sai:</span> {q1_5_text[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q1_5_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+1}"):
+                        st.markdown(scripts_p1[i])
+                        
+            scripts_p2 = [
+                "男：你乒乓球打得真不错，有时间能教教我吗？\n女：没问题。我每周六都会来体育馆，到时候你来找我就行了。\n问：女的是什么意思？",
+                "男：你这么着急去哪儿啊？我刚才叫你两次你都没听到。\n女：我去打印几份材料，一会儿上课讨论的时候要用。\n问：女的为什么很着急？",
+                "女：打了一下午羽毛球，肚子有点儿饿了。真香，今天吃什么？\n男：你鼻子真好，今晚我们吃饺子。再等一会儿，饭马上就好。\n问：关于女的，可以知道什么？",
+                "男：开一下窗户吧，热得我都有点儿受不了了。\n女：是你穿得太多了，把外面那件衣服脱了吧。\n问：根据对话，可以知道什么？",
+                "女：你看见我的手表没有？我印象里上车的时候还戴着呢。\n男：那看看在不在你包里。不会丢在出租车上了吧？\n问：女的在找什么？",
+                "男：孙小姐，表格我做好了，您看看有什么问题没有？\n女：刚才忘和你说了，还要再加上一列“性别”。\n问：女的要求怎么做？",
+                "男：厨房里的这个灯太小了，抽时间换一个大点儿、亮点儿的吧。\n女：以前不觉得，你现在一说，我也觉得确实挺小的。我今天下班去超市买一个。\n问：他们觉得厨房的灯怎么样？"
+            ]
+            for i in range(7):
+                if user_q6_12[i] != q6_12_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+6} sai.</span> Lựa chọn của bạn: `{user_q6_12[i]}`", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q6_12_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+6}"):
+                        st.markdown(scripts_p2[i])
+
+            scripts_p3 = [
+                "女：请把姓名、年龄、性别、联系方式等信息填在这张表上。\n男：好的，是在一楼打针吗？\n女：对，一楼，第二个房间就是打针室。到时候表交给护士就行了。\n男：好的，谢谢你。\n问：男的最可能在哪儿？",
+                "男：您好，我要两张电影票，八点二十那场。\n女：好的，您选一下座位吧，电脑上这些蓝色的都可以选。\n男：我要中间的，第十排，九号和十号。\n女：好的，先生，一共一百二十元。\n问：他们最可能在哪儿？",
+                "男：你想租什么样的房子？\n女：最好是离公司近一点儿，周围要安静，当然也不能太贵了。\n男：咱公司附近是购物中心，估计没有太便宜的房子。\n女：如果交通方便，稍微远一点儿，我也可以考虑。\n问：女的想找什么样的房子？",
+                "男：请问，附近哪儿可以复印？\n女：图书馆一楼东边有几台自助复印机。\n男：图书馆那儿人太多，总是排队，还有其他地方吗？\n女：那你要去学校外面了，南门对面有个小商店，那儿也可以复印。\n问：根据对话，男的最可能去哪儿？",
+                "男：小心，您慢点儿，我跟您一起搬吧。\n女：没关系，这个小沙发我自己搬得动。\n男：您这是要把它搬出来放哪儿啊？\n女：就这儿，再往左边一点儿就好了。\n问：女的在搬什么？",
+                "男：你学得可真快！\n女：我小时候学过两年的舞蹈，有点儿基础。\n男：原来是这样啊，那你帮我看看，我的动作对不对？\n女：总的来说，你跳得也不错，不过，胳膊再抬高点儿就更标准了。\n问：女的为什么学得快？",
+                "邓亚萍是中国著名的乒乓球运动员，也是获得世界乒乓球比赛第一次数最多的女运动员。她身高只有一米五五，看上去好像不是打乒乓球的材料，但她通过自己的努力，十三岁就获得全国第一，十五岁获得亚洲第一，第二年又成为世界第一，改变了人们认为高个子才适合打乒乓球的看法。\n19．关于邓亚萍，可以知道什么？\n20．邓亚萍什么时候获得亚洲第一？",
+                "邓亚萍十六岁成为世界第一，十五岁获得亚洲第一。",
+                "今天早上在上班路上，我看见同事小月走在前面不远处，就想跟她打个招呼。于是，我一边快走一边叫她的名字，可她一直没回头。我只好加快速度向她跑了过去，等到了她身边，才发现原来我认错人了。\n21．说话人一开始想和谁打招呼？\n22．说话人怎么了？",
+                "认错人了。"
+            ]
+            for i in range(10):
+                if user_q13_22[i] != q13_22_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+13} sai.</span> Lựa chọn của bạn: `{user_q13_22[i]}`", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q13_22_ans[i]}**")
+                    with st.expander(f"📖 Xem Lời thoại (Script) Câu {i+13}"):
+                        st.markdown(scripts_p3[i])
+
+    # ------------------ PHẦN ĐỌC BÀI 19 ------------------
+    with t_read:
+        st.markdown("### 二、阅读 (Phần đọc)")
+        st.markdown("#### **第一部分 (Phần 1) - 选词填空**")
+        st.markdown("**第 23-26 题：**")
+        st.code("A 戴    B 抬    C 禁止    D 坚持    E 道歉")
+        
+        q23_26_texts = [
+            "23. 夏天的晚上，我喜欢躺在草地上，\n\n（      ） 头看着满天的星星，那种感觉真是太棒了。",
+            "24. 这件事情看起来确实是我误会他了。\n\n我明天就去向他（      ），希望他能原谅我。",
+            "25. 走路的时候（      ） 着耳机听音乐，\n\n会影响你的注意力还有判断力，有时候是十分危险的。",
+            "26. 先生，对不起，我们宾馆有规定，\n\n这里（      ） 抽烟。前面有专门的吸烟室，往前走就能看到，就在楼梯右边。"
+        ]
+        q23_26_opts = ["A. 戴", "B. 抬", "C. 禁止", "D. 坚持", "E. 道歉"]
+        q23_26_ans = ["B", "E", "A", "C"]
+        user_q23_26 = []
+        col1, col2 = st.columns(2)
+        for i, q_text in enumerate(q23_26_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+23}:", ["Chưa chọn"] + q23_26_opts, key=f"l19_read_p1_1_{i}")
+                user_q23_26.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("**第 27-30 题：**")
+        st.code("A 占线    B 场    C 温度    D 转    E 眼镜")
+        q27_30_texts = [
+            "27. A：这个礼拜天我看了一（      ） 精彩的足球赛。\n\nB：是北京队跟上海队踢的那场吧？我也看了，踢得真不错！",
+            "28. A：您好！请问这附近是不是有家东北饺子馆？\n\nB：对，你走到前面路口左（      ） 就能看见了。",
+            "29. A：对面戴（      ） 的那个人你认识吗？\n\nB：她呀，她是新来的护士，好像是姓元。",
+            "30. A：王大夫办公室的电话怎么一直（      ） 呢？\n\nB：是不是电话没放好？你还是直接过去找他一趟吧。"
+        ]
+        q27_30_opts = ["A. 占线", "B. 场", "C. 温度", "D. 转", "E. 眼镜"]
+        q27_30_ans = ["B", "D", "E", "A"]
+        user_q27_30 = []
+        for i, q_text in enumerate(q27_30_texts):
+            target_col = col1 if i < 2 else col2
+            with target_col:
+                st.markdown(f"<div class='question-card'><strong>{q_text}</strong>", unsafe_allow_html=True)
+                ans = st.selectbox(f"Từ điền câu {i+27}:", ["Chưa chọn"] + q27_30_opts, key=f"l19_read_p1_2_{i}")
+                user_q27_30.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - 排列顺序**")
+        q31_34_texts = [
+            "31.\n\nA. 但在校长的鼓励下，她还是坚持了下来\n\nB. 学舞蹈是一件很辛苦的事\n\nC. 每天都要对着镜子练习同样的动作",
+            "32.\n\nA. 开车千万别喝酒，喝酒千万别开车\n\nB. 每个人都应该记住这句话\n\nC. 法律禁止司机酒后开车",
+            "33.\n\nA. 今天的晚会太精彩了\n\nB. 动作既标准又好看，非常棒\n\nC. 特别是那些外国留学生表演的中国功夫",
+            "34.\n\nA. 道歉时应该让人感觉到你真心的歉意\n\nB. 道歉不仅仅是一句简单的“对不起”\n\nC. 那样才有可能获得别人的原谅"
+        ]
+        q31_34_ans = ["BCA", "CAB", "ACB", "BAC"]
+        user_q31_34 = []
+        for i, q_text in enumerate(q31_34_texts):
+            st.markdown(f"<div class='question-card'>{q_text}", unsafe_allow_html=True)
+            ans = st.text_input(f"Thứ tự câu {i+31} (Ví dụ: ABC):", key=f"l19_read_p2_{i}").strip().upper()
+            user_q31_34.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第三部分 (Phần 3) - 阅读理解**")
+        q35_43_questions = [
+            "35. 很多人喜欢吃辣的食物，特别是在冷天，吃点儿辣的会让人觉得暖和。\n但是如果吃得太多，对胃不好。\n\n★ 这段话主要想告诉我们：",
+            "36. 我刚来这个城市的时候，这里很小，也很旧。\n十几年过去了，这里建起了很多高楼，路也变宽了，\n变得越来越漂亮、越来越热闹了。\n\n★ 关于这个城市，可以知道：",
+            "37. 人们常用“酸甜苦辣”来形容生活的各种味道。\n其实，生活中的困难和失败就像“苦”和“辣”，\n虽然让人难受，但它能让人成长。\n\n★ “苦”和“辣”可以让人：",
+            "38. 阳光、空气和水是生命不可缺少的。\n如果缺少了阳光，植物就无法生长；\n如果缺少了水，生命就无法继续。\n\n★ 这段话主要谈：",
+            "39. 我上学校网站看了课表，发现李老师这学期开了一门“汉字与文化”课，\n我想去听听，之前看过他写的一篇关于这方面的文章，非常有趣。\n\n★ 他在谈：",
+            "[40-41] 生活中我们总是需要做出各种各样的选择，\n比如选择哪个人做自己的妻子或丈夫，\n毕业后怎么选择适合自己发展的职业，\n购物时怎么选择质量又好、价格又便宜的东西等等。\n当你选择其中一个的同时，就说明得放弃别的选择。\n因此，有人说成功关键在于正确的选择。\n只有在正确选择的基础上，你才有可能成功。\n\n40. ★ 根据这段话可以知道，“选择”：",
+            "41. ★ 这段话告诉我们要：",
+            "[42-43] 跟其他家在外地的大学毕业生一样，\n小张走出社会遇到的第一个大问题就是租房。\n那时，他每个月的工资不到 1000 元，除了吃穿，用来租房的钱剩不了多少。\n因此，他只好到处找便宜的房子。\n“当时我租的房子只能放一张床、一个桌子，洗澡、做饭得用公共的，\n但是每月房租才 280 元，房东也不错，我在那里住了 6 年。”小张说。\n这么便宜的房子现在肯定找不到了，\n也正是因为这么便宜的房租，他才能存下钱，付上了买房的首付款。\n\n42. ★ 对于家在外地的大学毕业生来说，走出社会首先遇到的最大困难是：",
+            "43. ★ 根据这段话，可以知道小张："
+        ]
+        q35_43_options = [
+            ["A. 冷天多吃辣", "B. 辣的食物不能多吃", "C. 辣的对胃好", "D. 要学会做辣菜"],
+            ["A. 发展很快", "B. 人特别多", "C. 没有高楼", "D. 环境不好"],
+            ["A. 得到成长", "B. 感到快乐", "C. 忘记失败", "D. 减少困难"],
+            ["A. 怎样保护植物", "B. 水的作用", "C. 生命不可缺少的东西", "D. 阳光的颜色"],
+            ["A. 选课", "B. 课前预习", "C. 汉语语法", "D. 对汉字的看法"],
+            ["A. 需要别人帮助", "B. 是成功的关键", "C. 不用我们担心", "D. 只是暂时的"],
+            ["A. 快速选择", "B. 不能放弃", "C. 正确选择", "D. 相信自己"],
+            ["A. 找工作", "B. 租房子", "C. 买家具", "D. 学做饭"],
+            ["A. 想租房", "B. 刚毕业", "C. 已买房", "D. 很有钱"]
+        ]
+        q35_43_ans = ["B", "C", "A", "C", "A", "B", "C", "B", "C"]
+        user_q35_43 = []
+        for i in range(9):
+            st.markdown(f"<div class='question-card'>{q35_43_questions[i]}", unsafe_allow_html=True)
+            ans = st.selectbox(f"Đáp án câu {i+35}:", ["Chưa chọn"] + q35_43_options[i], key=f"l19_read_p3_{i}")
+            user_q35_43.append(ans[0] if ans != "Chưa chọn" else "Chưa chọn")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN ĐỌC", key="l19_btn_sub_read"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(4):
+                    if user_q23_26[i] == q23_26_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q27_30[i] == q27_30_ans[i]: correct_cnt += 1
+                for i in range(4):
+                    if user_q31_34[i] == q31_34_ans[i]: correct_cnt += 1
+                for i in range(9):
+                    if user_q35_43[i] == q35_43_ans[i]: correct_cnt += 1
+                st.session_state.l19_r_sub = True
+                st.session_state.l19_r_score = f"{correct_cnt}/21"
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l19_r_score}.")
+                send_results_to_gsheet(student_name, "Bài 19", "PHẦN ĐỌC", st.session_state.l19_r_score)
+
+        if st.session_state.l19_r_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(4):
+                if user_q23_26[i] != q23_26_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+23} sai:</span> {q23_26_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q23_26_ans[i]}**")
+            for i in range(4):
+                if user_q27_30[i] != q27_30_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+27} sai:</span> {q27_30_texts[i]}", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q27_30_ans[i]}**")
+            for i in range(4):
+                if user_q31_34[i] != q31_34_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+31} sai:</span> Lựa chọn của bạn: `{user_q31_34[i]}`", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q31_34_ans[i]}**")
+            for i in range(9):
+                if user_q35_43[i] != q35_43_ans[i]:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+35} sai:</span> Lựa chọn của bạn: `{user_q35_43[i]}`", unsafe_allow_html=True)
+                    st.markdown(f"👉 Đáp án đúng: **{q35_43_ans[i]}**")
+
+    # ------------------ PHẦN VIẾT BÀI 19 ------------------
+    with t_write:
+        st.markdown("### 三、书写 (Phần viết)")
+        st.markdown("#### **第一部分 (Phần 1) - Sắp xếp câu hoàn chỉnh**")
+        st.warning("⚠️ Chú ý: Phần viết được chấm tuyệt đối nghiêm ngặt. Sai bất kỳ 1 chữ hoặc 1 dấu câu nào cũng tính là sai hoàn toàn cả câu.")
+        
+        q44_48_words = [
+            "44. 有 / 我这里 / 很多零钱 / 你 / 可以 / 借给",
+            "45. 左右 / 房东 / 晚上 / 回来 / 每天 / 9点",
+            "46. 学期 / 我选了 / 最喜欢的 / 中国 / 这个 / 音乐史",
+            "47. 变得 / 破街道 / 以前 / 那条 / 热闹 / 真",
+            "48. 收拾 / 的时候 / 把衣服 / 弄脏了 / 厨房 / 我"
+        ]
+        
+        q44_48_acceptable_ans = [
+            ["我这里有很多零钱可以借给你。"],
+            ["房东每天晚上9点左右回来。", "房东每天晚上九点左右回来。"],
+            ["这个学期我选了最喜欢的中国音乐史。"],
+            ["以前那条破街道变得真热闹！", "以前那条破街道变得真热闹。"],
+            ["我收拾厨房的时候把衣服弄脏了。"]
+        ]
+        
+        user_q44_48 = []
+        for i, words in enumerate(q44_48_words):
+            st.markdown(f"<div class='question-card'><strong>Câu {i+44}:</strong> {words}", unsafe_allow_html=True)
+            ans = st.text_input("Nhập câu hoàn chỉnh của bạn tại đây:", key=f"l19_write_p1_{i}").strip()
+            user_q44_48.append(ans)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown("---")
+        st.markdown("#### **第二部分 (Phần 2) - Nhìn tranh đặt câu (Tự luận đối chiếu gợi ý)**")
+        
+        st.markdown("""
+        <div class='question-card'>
+            <strong>Câu 49:</strong> Tranh đĩa và dao nĩa ăn đồ Tây.<br>
+            Từ gợi ý: <strong>刀</strong>
+        </div>
+        """, unsafe_allow_html=True)
+        user_q49 = st.text_area("Viết câu tự luận của bạn tại đây:", key="l19_write_p2_49")
+        
+        st.markdown("""
+        <div class='question-card'>
+            <strong>Câu 50:</strong> Tranh khu dân cư biệt thự xanh đẹp.<br>
+            Từ gợi ý: <strong>小区</strong>
+        </div>
+        """, unsafe_allow_html=True)
+        user_q50 = st.text_area("Viết câu tự luận của bạn tại đây:", key="l19_write_p2_50")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 NỘP BÀI PHẦN VIẾT", key="l19_btn_sub_write"):
+            if not student_name.strip():
+                st.error("⚠️ Bạn hãy điền Họ và tên học sinh ở đầu trang trước khi nộp nhé!")
+            else:
+                correct_cnt = 0
+                for i in range(5):
+                    user_ans = user_q44_48[i].strip()
+                    matched = False
+                    for possible_ans in q44_48_acceptable_ans[i]:
+                        if user_ans == possible_ans.strip():
+                            matched = True
+                            break
+                    if matched:
+                        correct_cnt += 1
+                        
+                st.session_state.l19_w_sub = True
+                st.session_state.l19_w_score = f"{correct_cnt}/5"
+                
+                st.success(f"Chúc mừng bạn đã làm xong bài tập nha. Điểm số của bạn là: {st.session_state.l19_w_score}.")
+                send_results_to_gsheet(student_name, "Bài 19", "PHẦN VIẾT", st.session_state.l19_w_score)
+
+        if st.session_state.l19_w_sub:
+            st.markdown("### 🔍 CHI TIẾT CÂU SAI & ĐÁP ÁN ĐÚNG:")
+            for i in range(5):
+                user_ans = user_q44_48[i].strip()
+                matched = False
+                for possible_ans in q44_48_acceptable_ans[i]:
+                    if user_ans == possible_ans.strip():
+                        matched = True
+                        break
+                if not matched:
+                    st.markdown(f"<span style='color:#D32F2F;'>❌ Câu {i+44} viết chưa chính xác:</span>", unsafe_allow_html=True)
+                    st.markdown(f"Đáp án của bạn: `{user_q44_48[i]}`")
+                    st.markdown(f"👉 Đáp án đúng: **{q44_48_acceptable_ans[i][0]}**")
+                    
+            st.markdown("---")
+            st.markdown("#### 💡 CÂU GỢI Ý MẪU CHO PHẦN ĐẶT CÂU THEO TRANH:")
+            st.markdown("- **Câu 49 (刀):** `吃西餐用的刀一般都放在盘子右边。` *(Dao dùng ăn đồ Tây thường được đặt ở bên phải đĩa.)*")
+            st.markdown("- **Câu 50 (小区):** `他们小区的环境很不错，又漂亮又安静。` *(Môi trường trong khu dân cư của họ rất tốt, vừa đẹp vừa yên tĩnh.)*")
+
+
+
+
+# ==============================================================================
+# HỆ THỐNG MENU VÀ TỰ ĐỘNG SẮP XẾP BÀI MỚI LÊN TRƯỚC (SCALABLE ARCHITECTURE)
+# ==============================================================================
+
+LESSONS = {
+    "Bài 19: 生活的味道": show_lesson_19,
+    "Bài 18: 科技与世界": show_lesson_18,
+    "Bài 17: 人与自然": show_lesson_17,
+    "Bài 16: 生活可以更美好": show_lesson_16,
+}
+
+# Tiêu đề bài học
+st.markdown("<h1>BÀI TẬP HSK4 (TẬP 2)</h1>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>🌸 Chúc các bạn học tập tốt và làm bài vui vẻ! 🌸</div>", unsafe_allow_html=True)
+
+# Ô nhập họ tên học sinh ở đầu trang
 student_name = st.text_input(
-    "👤 Họ và tên học sinh / 考生姓名:",
+    "👤 Họ và tên học sinh:", 
     value=st.session_state.student_name,
     placeholder="Ví dụ: Nguyễn Văn A",
-    key="name_input_main"
+    key="name_input"
 )
 st.session_state.student_name = student_name
 
 st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:16px; font-weight:700; color:#275338; margin-bottom:8px;'>📖 CHỌN BÀI HỌC:</div>", unsafe_allow_html=True)
 
-EXAM_DATA = {
-    "H41110": {
-        "title": "H41110",
-        "p1_listen": [
-            {
-                "num": 1,
-                "text": "1．★ 他想周日去买电脑。",
-                "correct": "√",
-                "script": "1．家里的电脑太旧了，正好公司发了一万元奖金，我想星期天去买个笔记本电脑，你不会不同意吧？"
-            },
-            {
-                "num": 2,
-                "text": "2．★ 老张的自行车坏了。",
-                "correct": "×",
-                "script": "2．老张，听说你的自行车丢了？我昨天下午去买了辆新的，那辆旧的就送给你骑吧。这是钥匙，拿着。"
-            },
-            {
-                "num": 3,
-                "text": "3．★ 游泳比跑步效果更好。",
-                "correct": "×",
-                "script": "3．锻炼身体对健康很有好处，无论是游泳、跑步，还是打篮球，都是不错的选择，但关键是要能坚持。"
-            },
-            {
-                "num": 4,
-                "text": "4．★ 平时他在外面吃饭。",
-                "correct": "√",
-                "script": "4．平时都在外面吃，今天我亲自下厨，做了几道拿手菜，你尝尝味道怎么样。"
-            },
-            {
-                "num": 5,
-                "text": "5．★ 他还没找到合适的工作。",
-                "correct": "√",
-                "script": "5．投了好多份简历，面试了几家公司，可到现在还没找到合适的工作。"
-            },
-            {
-                "num": 6,
-                "text": "6．★ 他们很可能在医院。",
-                "correct": "√",
-                "script": "6．女：医生，我咳嗽得厉害，还发烧。男：先去打个针，然后再吃点儿药，多休息。"
-            },
-            {
-                "num": 7,
-                "text": "7．★ 他知道比赛结果。",
-                "correct": "×",
-                "script": "7．下午的足球比赛到底谁赢了？我加班没能看上。"
-            },
-            {
-                "num": 8,
-                "text": "8．★ 他们偶尔会去看电影。",
-                "correct": "×",
-                "script": "8．我们俩每个周末都会去电影院看电影，这已经成了习惯。"
-            },
-            {
-                "num": 9,
-                "text": "9．★ 李先生是来表示祝贺的。",
-                "correct": "√",
-                "script": "9．听说您买新房了，恭喜恭喜！这是给您的礼物。"
-            },
-            {
-                "num": 10,
-                "text": "10．★ 参观4点半结束。",
-                "correct": "×",
-                "script": "10．大家请注意，博物馆下午五点半闭馆，请安排好参观时间。"
-            }
-        ],
-        "p2_listen": [
-            {
-                "num": 11,
-                "options": [
-                    "A. 聪明",
-                    "B. 太懒",
-                    "C. 很激动",
-                    "D. 十分热情"
-                ],
-                "correct": "D",
-                "script": "11．女：王阿姨，您太客气了。\n男：应该的，欢迎你常来家里玩儿。\n问：王阿姨怎么样？"
-            },
-            {
-                "num": 12,
-                "options": [
-                    "A. 她很成熟",
-                    "B. 她太瘦了",
-                    "C. 她不用减肥",
-                    "D. 她在开玩笑"
-                ],
-                "correct": "C",
-                "script": "12．男：你最近怎么吃得 pessimistic这么少？\n女：我在减肥呢。\n男：你一点儿也不胖，不用减肥。\n问：男的是什么意思？"
-            },
-            {
-                "num": 13,
-                "options": [
-                    "A. 厨房",
-                    "B. 垃圾桶里",
-                    "C. 塑料袋里",
-                    "D. 窗户外面"
-                ],
-                "correct": "B",
-                "script": "13．男：我的旧西服你放哪儿了？\n女：我看太旧了，就扔垃圾桶里了。\n问：旧西服在哪儿？"
-            },
-            {
-                "num": 14,
-                "options": [
-                    "A. 感冒了",
-                    "B. 觉得还早",
-                    "C. 手表停了",
-                    "D. 今天阴天"
-                ],
-                "correct": "C",
-                "script": "14．女：都八点了，你怎么还不起来？\n男：八点？我的手表才六点半，糟糕，手表停了。\n问：男的怎么了？"
-            },
-            {
-                "num": 15,
-                "options": [
-                    "A. 研究生",
-                    "B. 黄律师",
-                    "C. 马教授",
-                    "D. 翻译公司"
-                ],
-                "correct": "C",
-                "script": "15．女：请问马教授在吗？\n男：他在开会，您有什么事可以跟我说。\n问：女的要找谁？"
-            },
-            {
-                "num": 16,
-                "options": [
-                    "A. 比较贵",
-                    "B. 颜色暗",
-                    "C. 质量差",
-                    "D. 样子难看"
-                ],
-                "correct": "A",
-                "script": "16．女：这两个电子词典样子差不多，左边这个怎么这么贵？\n男：那是新出的，功能多一些。\n问：左边的电子词典怎么样？"
-            },
-            {
-                "num": 17,
-                "options": [
-                    "A. 女的不渴",
-                    "B. 女的出汗了",
-                    "C. 没有饮料了",
-                    "D. 他们在跳舞"
-                ],
-                "correct": "B",
-                "script": "17．男：打完球出了这么多汗，快擦擦，别感冒了。\n女：好的，谢谢你。\n问：根据对话，可以知道什么？"
-            },
-            {
-                "num": 18,
-                "options": [
-                    "A. 饭店管理",
-                    "B. 新闻报道",
-                    "C. 收发传真",
-                    "D. 安排座位"
-                ],
-                "correct": "B",
-                "script": "18．女：小刘，这篇关于环保的新闻报道写得不错。\n男：谢谢经理，我再仔细改改。\n问：他们在谈什么？"
-            },
-            {
-                "num": 19,
-                "options": [
-                    "A. 很孤单",
-                    "B. 喜欢打扮",
-                    "C. 住在海边",
-                    "D. 是位博士"
-                ],
-                "correct": "D",
-                "script": "19．男：听说小张拿到博士学位了？\n女：是啊，她下个月就要留校当老师了。\n问：关于小张，可以知道什么？"
-            },
-            {
-                "num": 20,
-                "options": [
-                    "A. 堵车",
-                    "B. 先去送人了",
-                    "C. 弄错地址了",
-                    "D. 路上撞车了"
-                ],
-                "correct": "C",
-                "script": "20．女：你怎么才来？大家等了你半个小时了。\n男：真抱歉，我把聚会的饭店地址弄错了。\n问：男的为什么迟到了？"
-            },
-            {
-                "num": 21,
-                "options": [
-                    "A. 机场",
-                    "B. 火车站",
-                    "C. 饭馆儿",
-                    "D. 出租车上"
-                ],
-                "correct": "D",
-                "script": "21．男：师傅，我去首都机场，大概需要多长时间？\n女：这个时间不堵车，半个小时就能到。\n问：他们最可能在哪儿？"
-            },
-            {
-                "num": 22,
-                "options": [
-                    "A. 很脏",
-                    "B. 很暖和",
-                    "C. 很凉快",
-                    "D. 很安静"
-                ],
-                "correct": "B",
-                "script": "22．女：虽然外面下着雪，但是房间里开着暖气，挺暖和的。\n男：是啊，一点儿也不冷。\n问：房间里怎么样？"
-            },
-            {
-                "num": 23,
-                "options": [
-                    "A. 阳光",
-                    "B. 皮肤",
-                    "C. 植物",
-                    "D. 海洋"
-                ],
-                "correct": "B",
-                "script": "23．男：夏天阳光太强，出门要保护好皮肤。\n女：对，得涂点儿防晒霜。\n问：男的提醒女的注意什么？"
-            },
-            {
-                "num": 24,
-                "options": [
-                    "A. 问路",
-                    "B. 借书",
-                    "C. 购物",
-                    "D. 办签证"
-                ],
-                "correct": "D",
-                "script": "24．女：办签证需要准备哪些材料？\n男：护照、照片和申请表，具体的要求你上大使馆网站查查。\n问：女的想干什么？"
-            },
-            {
-                "num": 25,
-                "options": [
-                    "A. 17 号",
-                    "B. 第二天",
-                    "C. 下周五",
-                    "D. 生日那天"
-                ],
-                "correct": "C",
-                "script": "25．男：考试时间改了吗？\n女：改了，推迟到下周五了。\n问：考试改到什么时候了？"
-            }
-        ],
-        "p3_listen": [
-            {
-                "num": 26,
-                "options": [
-                    "A. 下雨了",
-                    "B. 刮风了",
-                    "C. 电梯坏了",
-                    "D. 他们在逛街"
-                ],
-                "correct": "C",
-                "script": "26．男：电梯怎么不走？女：坏了，正在修呢，咱们走楼梯吧。问：发生什么事了？"
-            },
-            {
-                "num": 27,
-                "options": [
-                    "A. 老师",
-                    "B. 记者",
-                    "C. 理发师",
-                    "D. 女的的父母"
-                ],
-                "correct": "A",
-                "script": "27．女：王老师，您下周有空儿来给我们做个讲座吗？男：没问题，具体时间联系我。问：男的是做什么的？"
-            },
-            {
-                "num": 28,
-                "options": [
-                    "A. 到年底了",
-                    "B. 放暑假了",
-                    "C. 商场有表演",
-                    "D. 水果降价了"
-                ],
-                "correct": "B",
-                "script": "28．男：学校里怎么没什么人了？女：你忘了？已经放暑假了。问：为什么学校里没什么人？"
-            },
-            {
-                "num": 29,
-                "options": [
-                    "A. 肚子疼",
-                    "B. 打错字了",
-                    "C. 忘吃药了",
-                    "D. 没找到入口"
-                ],
-                "correct": "D",
-                "script": "29．女：你在哪儿呢？男：我在体育馆外面呢，找半天也没找到入口。问：男的遇到什么困难了？"
-            },
-            {
-                "num": 30,
-                "options": [
-                    "A. 很吵",
-                    "B. 免费停车",
-                    "C. 没洗手间",
-                    "D. 不允许抽烟"
-                ],
-                "correct": "D",
-                "script": "30．男：先生，这里是无烟区，不允许抽烟。女：抱歉，我这就熄掉。问：关于这个地方，下列哪个正确？"
-            },
-            {
-                "num": 31,
-                "options": [
-                    "A. 很得意",
-                    "B. 被骗了",
-                    "C. 没收到通知",
-                    "D. 讲了个笑话"
-                ],
-                "correct": "A",
-                "script": "31．女：看你高兴的样子，有什么好消息？男：这次考试我得了第一名！问：男的心情怎么样？"
-            },
-            {
-                "num": 32,
-                "options": [
-                    "A. 要搬家",
-                    "B. 力气很大",
-                    "C. 下周出差",
-                    "D. 觉得很抱歉"
-                ],
-                "correct": "D",
-                "script": "32．男：真抱歉，我把您的书弄脏了。女：没关系，洗洗就好了。问：男的怎么了？"
-            },
-            {
-                "num": 33,
-                "options": [
-                    "A. 不戴眼镜",
-                    "B. 认真负责",
-                    "C. 能陪她聊天",
-                    "D. 和她爱好相同"
-                ],
-                "correct": "B",
-                "script": "33．女：小林工作特别认真负责，领导很赏识他。男：是啊，大家都愿意和他合作。问：小林是个怎样的人？"
-            },
-            {
-                "num": 34,
-                "options": [
-                    "A. 护士",
-                    "B. 医生",
-                    "C. 服务员",
-                    "D. 售货员"
-                ],
-                "correct": "A",
-                "script": "34．男：请问打针去哪个房间？女：一楼左转第二个房间。问：女的最可能是做什么的？"
-            },
-            {
-                "num": 35,
-                "options": [
-                    "A. 洗几个杯子",
-                    "B. 送哪种蛋糕",
-                    "C. 去哪儿唱歌",
-                    "D. 买什么礼物"
-                ],
-                "correct": "D",
-                "script": "35．女：明天是张老师生日，咱们买什么礼物好呢？男：买束花或者买本书吧。问：他们在商量什么？"
-            },
-            {
-                "num": 36,
-                "options": [
-                    "A. 笑了",
-                    "B. 流泪了",
-                    "C. 生气了",
-                    "D. 后悔了"
-                ],
-                "correct": "B",
-                "script": "36．男：这部电影太感人了，很多人都看流泪了。女：我也被感动了。问：观众怎么了？"
-            },
-            {
-                "num": 37,
-                "options": [
-                    "A. 爱热闹",
-                    "B. 有个女儿",
-                    "C. 还没结婚",
-                    "D. 是位演员"
-                ],
-                "correct": "B",
-                "script": "37．女：这是我女儿画的画儿，好看吗？男：画得真漂亮！问：关于女的，可以知道什么？"
-            },
-            {
-                "num": 38,
-                "options": [
-                    "A. 鞋破了",
-                    "B. 要去爬山",
-                    "C. 走路更舒服",
-                    "D. 想跑得更快"
-                ],
-                "correct": "C",
-                "script": "38．男：你怎么穿球鞋去上班？女：穿球鞋走路更舒服。问：女的为什么穿球鞋？"
-            },
-            {
-                "num": 39,
-                "options": [
-                    "A. 森林",
-                    "B. 鞋店",
-                    "C. 动物园",
-                    "D. 体育场"
-                ],
-                "correct": "A",
-                "script": "39．女：这里的树木真多，空气太新鲜了。男：是啊，这片森林保护得很好。问：他们可能在哪儿？"
-            },
-            {
-                "num": 40,
-                "options": [
-                    "A. 提供机会",
-                    "B. 总结过去",
-                    "C. 增长知识",
-                    "D. 增加工资"
-                ],
-                "correct": "C",
-                "script": "40．男：读书不但能丰富生活，还能增长知识。女：你说得对。问：读书有什么好处？"
-            },
-            {
-                "num": 41,
-                "options": [
-                    "A. 怎样阅读",
-                    "B. 反对浪费",
-                    "C. 学会同情",
-                    "D. 要保护环境"
-                ],
-                "correct": "B",
-                "script": "41．一段话：节约是一种好习惯，无论是水、电还是粮食，我们都不应该浪费。问：这段话主要谈什么？"
-            },
-            {
-                "num": 42,
-                "options": [
-                    "A. 批评",
-                    "B. 同事关系",
-                    "C. 办公环境",
-                    "D. 回忆过去"
-                ],
-                "correct": "D",
-                "script": "42．一段话：看着这些老照片，我不禁回忆起童年在农村生活的日子。问：这段话主要讲什么？"
-            },
-            {
-                "num": 43,
-                "options": [
-                    "A. 桌面",
-                    "B. 脾气",
-                    "C. 顺序",
-                    "D. 管理办法"
-                ],
-                "correct": "B",
-                "script": "43．一段话：发脾气解决不了任何问题，遇到事情要学会冷静思考。问：这段话主要谈什么？"
-            },
-            {
-                "num": 44,
-                "options": [
-                    "A. 站着吃",
-                    "B. 放碗里吃",
-                    "C. 刷牙后吃",
-                    "D. 先吃最好的"
-                ],
-                "correct": "D",
-                "script": "44．一段话：吃盘子里的葡萄时，有人喜欢先吃最好的，有人喜欢先吃差的。问：第一种人怎么吃？"
-            },
-            {
-                "num": 45,
-                "options": [
-                    "A. 爱吃酸的",
-                    "B. 喜欢做梦",
-                    "C. 总有希望",
-                    "D. 容易被感动"
-                ],
-                "correct": "C",
-                "script": "45．一段话：生活即使遇到困难，只要心里总有希望，就一定能走出来。问：这段话告诉我们什么？"
-            }
-        ],
-        "p1_read": [
-            {
-                "num": 46,
-                "text": "46. 冬天到了，天气（  ）变冷了。",
-                "options": [
-                    "A. 打折",
-                    "B. 成功",
-                    "C. 详细",
-                    "D. 坚持",
-                    "E. 范围",
-                    "F. 逐渐"
-                ],
-                "correct": "F"
-            },
-            {
-                "num": 47,
-                "text": "47. 一般情况下，人的正常体温在 36-37℃之间，超出这个（  ）就是发烧。",
-                "options": [
-                    "A. 打折",
-                    "B. 成功",
-                    "C. 详细",
-                    "D. 坚持",
-                    "E. 范围",
-                    "F. 逐渐"
-                ],
-                "correct": "E"
-            },
-            {
-                "num": 48,
-                "text": "48. 那件衣服（  ）后只要 98 元，很便宜。",
-                "options": [
-                    "A. 打折",
-                    "B. 成功",
-                    "C. 详细",
-                    "D. 坚持",
-                    "E. 范围",
-                    "F. 逐渐"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 49,
-                "text": "49. 爷爷奶奶经常说：“失败是（  ）之母，不要害怕失败。”",
-                "options": [
-                    "A. 打折",
-                    "B. 成功",
-                    "C. 详细",
-                    "D. 坚持",
-                    "E. 范围",
-                    "F. 逐渐"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 50,
-                "text": "50. 为了不引起误会，她又向大家（  ）解释了一遍事情的经过。",
-                "options": [
-                    "A. 打折",
-                    "B. 成功",
-                    "C. 详细",
-                    "D. 坚持",
-                    "E. 范围",
-                    "F. 逐渐"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 51,
-                "text": "51. A：呀，你的这个行李箱竟然跟我的（  ）一样，连颜色都一样。\n    B：那是我去年夏天买的，你是什么时候买的？",
-                "options": [
-                    "A. 提前",
-                    "B. 挺",
-                    "C. 温度",
-                    "D. 有趣",
-                    "E. 任务",
-                    "F. 完全"
-                ],
-                "correct": "F"
-            },
-            {
-                "num": 52,
-                "text": "52. A：这本小说很（  ），我估计明天就能看完，后天见面时就可以还你。\n    B：不着急，你慢慢看，周末给我就行。",
-                "options": [
-                    "A. 提前",
-                    "B. 挺",
-                    "C. 温度",
-                    "D. 有趣",
-                    "E. 任务",
-                    "F. 完全"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 53,
-                "text": "53. A：这是我从国外带回来的饼干，（  ）好吃的，你尝尝吧。\n    B：谢谢你，这次出差顺利吧？",
-                "options": [
-                    "A. 提前",
-                    "B. 挺",
-                    "C. 温度",
-                    "D. 有趣",
-                    "E. 任务",
-                    "F. 完全"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 54,
-                "text": "54. A：加油，我等你们的好消息。\n    B：感谢您的信任，我们一定按时完成（  ），不会让您失望的。",
-                "options": [
-                    "A. 提前",
-                    "B. 挺",
-                    "C. 温度",
-                    "D. 有趣",
-                    "E. 任务",
-                    "F. 完全"
-                ],
-                "correct": "E"
-            },
-            {
-                "num": 55,
-                "text": "55. A：现在就去会议室？咱们去得太早了吧？\n    B：时间（  ）了，早上通知改时间了。",
-                "options": [
-                    "A. 提前",
-                    "B. 挺",
-                    "C. 温度",
-                    "D. 有趣",
-                    "E. 任务",
-                    "F. 完全"
-                ],
-                "correct": "A"
-            }
-        ],
-        "p2_read": [
-            {
-                "num": 56,
-                "text": "56. A 你弟弟的基础挺好的\n    B 喂，我打算放寒假后去学弹钢琴\n    C 要不要也给他报个名",
-                "correct": "BAC"
-            },
-            {
-                "num": 57,
-                "text": "57. A 所有的工作都在按计划进行着\n    B 还要继续辛苦大家\n    C 没出现任何问题，接下来的两个月",
-                "correct": "ACB"
-            },
-            {
-                "num": 58,
-                "text": "58. A 这就是你哥？你们俩长得太像了\n    B 不仔细看的话\n    C 真的很难看出你们俩有什么区别",
-                "correct": "ABC"
-            },
-            {
-                "num": 59,
-                "text": "59. A 当大部分人都在关心你飞得高不高时\n    B 这少数人，才是你的朋友\n    C 只有少数人关心你飞得累不累",
-                "correct": "ACB"
-            },
-            {
-                "num": 60,
-                "text": "60. A 那种既兴奋又紧张的感觉到现在仍然难以忘记\n    B 由于那是我第一次参加国际比赛\n    C 大学一年级时，我参加了世界大学生运动会",
-                "correct": "CBA"
-            },
-            {
-                "num": 61,
-                "text": "61. A 会后记得要全部收回来\n    B 请把这份调查表复印 35 份\n    C 明天上午会前发给各位代表，请他们填一下",
-                "correct": "BCA"
-            },
-            {
-                "num": 62,
-                "text": "62. A 既然你已经决定了\n    B 那我们尊重你的选择\n    C 有困难可以回来找我们，我们永远都支持你",
-                "correct": "ABC"
-            },
-            {
-                "num": 63,
-                "text": "63. A 不要随便乱扔\n    B 否则，下次找起来会比较麻烦\n    C 东西用完后，最好放回原来的地方",
-                "correct": "CAB"
-            },
-            {
-                "num": 64,
-                "text": "64. A 但学艺术的小关还是拒绝了杂志社的邀请\n    B 尽管杂志社的收入不低\n    C 他的理想是开一个自己的工作室",
-                "correct": "BAC"
-            },
-            {
-                "num": 65,
-                "text": "65. A 请他给你当导游保证没问题\n    B 对那个城市很熟悉\n    C 我这个同学就是在北京出生、长大的",
-                "correct": "CBA"
-            }
-        ],
-        "p3_read": [
-            {
-                "num": 66,
-                "text": "66. 有些电话号码只有 3 个数字，这是为了方便人们记住。例如，你想找警察帮忙，可以打 110；想知道天气情况，可以打 121；有人生病了，可以打 120。\n★ 根据这段话，打 121 是因为想：",
-                "options": [
-                    "A 找大夫",
-                    "B 知道天气",
-                    "C 办信用卡",
-                    "D 打扫房间"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 67,
-                "text": "67. 虽然京剧的历史才两百多年，但是已经发展得很成熟了。随着社会的发展，京剧也在改变着，以适应不同年龄观众的需要。\n★ 关于京剧，可以知道：",
-                "options": [
-                    "A 很流行",
-                    "B 缺少变化",
-                    "C 历史不长",
-                    "D 动作复杂"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 68,
-                "text": "68. 要想获得别人的尊重，首先要学会尊重别人。尊重别人，不仅指对人友好、有礼貌，而且还要尊重别人的兴趣和爱好。\n★ 这段话主要想告诉我们，怎样：",
-                "options": [
-                    "A 互相帮助",
-                    "B 提高能力",
-                    "C 原谅别人",
-                    "D 尊重别人"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 69,
-                "text": "69. 语言是交流的工具，多掌握一门语言，就多了一双看世界的眼睛。\n★ 这段话认为掌握一门外语可以：",
-                "options": [
-                    "A 保护眼睛",
-                    "B 更好地了解世界",
-                    "C 获得高薪",
-                    "D 减少误会"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 70,
-                "text": "70. 很多人喜欢在家里养花，不仅因为花能美化环境，还因为照顾花草能让人放松心情。\n★ 养花的主要好处是：",
-                "options": [
-                    "A 增加收入",
-                    "B 锻炼身体",
-                    "C 节省时间",
-                    "D 放松心情"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 71,
-                "text": "71. 做事情光有热情还不够，还需要有耐心和方法，否则很难成功。\n★ 想要成功需要：",
-                "options": [
-                    "A 很多钱",
-                    "B 运气",
-                    "C 耐心和方法",
-                    "D 别人的帮助"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 72,
-                "text": "72. 这个城市的交通非常便利，地铁和公交线路覆盖了几乎所有主要的景点。\n★ 这个城市的特点是：",
-                "options": [
-                    "A 气候湿润",
-                    "B 人口很多",
-                    "C 消费很高",
-                    "D 交通便利"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 73,
-                "text": "73. 遇到困难时，不要轻易放弃，坚持下去往往就会看到希望。\n★ 遇到困难时应该：",
-                "options": [
-                    "A 马上求助",
-                    "B 换个目标",
-                    "C 休息几天",
-                    "D 坚持不放弃"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 74,
-                "text": "74. 饮食对健康有很大的影响，平时应该多吃蔬菜和水果，少吃高油高糖的食物。\n★ 为了健康应该：",
-                "options": [
-                    "A 不吃晚饭",
-                    "B 多喝咖啡",
-                    "C 多吃蔬果",
-                    "D 经常打针"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 75,
-                "text": "75. 良好的第一印象很重要，它可以在很短的时间内拉近两个人之间的距离。\n★ 第一印象的作用是：",
-                "options": [
-                    "A 决定一切",
-                    "B 容易改变",
-                    "C 拉近距离",
-                    "D 避免冲突"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 76,
-                "text": "76. 读书可以开阔视野，让人看到更广阔的世界。\n★ 读书的好处是：",
-                "options": [
-                    "A 开阔视野",
-                    "B 提高语速",
-                    "C 减肥",
-                    "D 增加睡眠"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 77,
-                "text": "77. 适当的运动可以增强体力，提高身体的免疫力。\n★ 运动可以：",
-                "options": [
-                    "A 让人发烧",
-                    "B 浪费时间",
-                    "C 增加压力",
-                    "D 增强体力"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 78,
-                "text": "78. 保护环境需要全社会共同努力，从小事做起，节约水电。\n★ 保护环境应该：",
-                "options": [
-                    "A 互相推卸",
-                    "B 顺其自然",
-                    "C 只靠政府",
-                    "D 从小事做起"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 79,
-                "text": "79. 幽默的人往往更容易交到朋友，因为他们能给身边的人带来快乐。\n★ 幽默的人容易交朋友是因为：",
-                "options": [
-                    "A 能给别人带来快乐",
-                    "B 很富有",
-                    "C 颜值高",
-                    "D 很严肃"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 80,
-                "text": "80. 准时守信是做人的基本原则，答应别人的事情一定要按时做到。\n★ 这段话强调：",
-                "options": [
-                    "A 要勇敢",
-                    "B 要聪明",
-                    "C 要活泼",
-                    "D 要准时守信"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 81,
-                "text": "81. 学习一门技能需要经过长期的练习，不可能几天就掌握。\n★ 学习技能需要：",
-                "options": [
-                    "A 天赋",
-                    "B 很多钱",
-                    "C 长期练习",
-                    "D 名师指导"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 82,
-                "text": "82. 很多孩子小时候对世界充满好奇，喜欢问为什么。\n★ 孩子小时候容易：",
-                "options": [
-                    "A 害羞",
-                    "B 觉得孤单",
-                    "C 经常生病",
-                    "D 充满好奇"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 83,
-                "text": "83. 工作和休息要合理安排，过度劳累会损害身体健康。\n★ 这段话建议：",
-                "options": [
-                    "A 放弃工作",
-                    "B 劳逸结合",
-                    "C 每天跑步",
-                    "D 经常出差"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 84,
-                "text": "84. 沟通是解决人与人之间矛盾的最好方式。\n★ 解决矛盾最好：",
-                "options": [
-                    "A 互相打架",
-                    "B 保持沉默",
-                    "C 进行沟通",
-                    "D 找警察"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 85,
-                "text": "85. 失败并不可怕，可怕的是失去重新站起来的勇气。\n★ 最可怕的是：",
-                "options": [
-                    "A 考不好",
-                    "B 失去勇气",
-                    "C 没钱",
-                    "D 天气不好"
-                ],
-                "correct": "B"
-            }
-        ],
-        "p1_write": [
-            {
-                "num": 86,
-                "words": "86. 这篇文章 / 三部分 / 组成 / 由",
-                "correct": [
-                    "这篇文章由三部分组成。"
-                ]
-            },
-            {
-                "num": 87,
-                "words": "87. 儿童 / 欢迎 / 很 / 这个节目 / 受",
-                "correct": [
-                    "这个节目很受儿童欢迎。"
-                ]
-            },
-            {
-                "num": 88,
-                "words": "88. 离大使馆 / 友谊宾馆 / 远 / 吗",
-                "correct": [
-                    "友谊宾馆离大使馆远吗？"
-                ]
-            },
-            {
-                "num": 89,
-                "words": "89. 很 / 诚实 / 那个 / 确实 / 司机",
-                "correct": [
-                    "那个司机确实很诚实。"
-                ]
-            },
-            {
-                "num": 90,
-                "words": "90. 加油站 / 使用 / 手机 / 禁止",
-                "correct": [
-                    "加油站禁止使用手机。"
-                ]
-            },
-            {
-                "num": 91,
-                "words": "91. 去 / 公园 / 你陪姐姐 / 散散步 / 吧",
-                "correct": [
-                    "你陪姐姐去公园散散步吧。"
-                ]
-            },
-            {
-                "num": 92,
-                "words": "92. 有点儿 / 咸 / 中午的 / 西红柿鸡蛋汤 / 稍微",
-                "correct": [
-                    "中午的西红柿鸡蛋汤稍微有点儿咸。"
-                ]
-            },
-            {
-                "num": 93,
-                "words": "93. 中文 / 说得 / 你们校长 / 的 / 很流利",
-                "correct": [
-                    "你们校长的中文说得很流利。"
-                ]
-            },
-            {
-                "num": 94,
-                "words": "94. 90%的 / 通过了考试 / 同学 / 大约有",
-                "correct": [
-                    "大约有90%的同学通过了考试。"
-                ]
-            },
-            {
-                "num": 95,
-                "words": "95. 房间 / 米小姐 / 把 / 收拾好了",
-                "correct": [
-                    "米小姐把房间收拾好了。"
-                ]
-            }
-        ],
-        "p2_write": [
-            {
-                "num": 96,
-                "word": "袜子",
-                "img_num": 1,
-                "prompt": "Tranh hai đứa trẻ không穿袜子 (chân trần)"
-            },
-            {
-                "num": 97,
-                "word": "害羞",
-                "img_num": 2,
-                "prompt": "Tranh cô gái khép nép 害羞"
-            },
-            {
-                "num": 98,
-                "word": "醒",
-                "img_num": 3,
-                "prompt": "Tranh cô gái vừa 醒 来起床"
-            },
-            {
-                "num": 99,
-                "word": "密码",
-                "img_num": 4,
-                "prompt": "Tranh suy nghĩ 输入密码"
-            },
-            {
-                "num": 100,
-                "word": "咳嗽",
-                "img_num": 5,
-                "prompt": "Tranh đeo khẩu khẩu 咳嗽"
-            }
-        ]
-    },
-    "H41111": {
-        "p1_listen": [
-            {
-                "num": 1,
-                "text": "1．★ 葡萄酒可以多喝。",
-                "correct": "×",
-                "script": "1．每天喝一点儿葡萄酒，对身体是有好处的。但是不能喝太多。"
-            },
-            {
-                "num": 2,
-                "text": "2．★ 他对小云没什么印象。",
-                "correct": "×",
-                "script": "2．虽然和小云只见过一面，但是她活泼和热情的性格给我留下了很深的印象。"
-            },
-            {
-                "num": 3,
-                "text": "3．★ 高叔叔早睡早起。",
-                "correct": "√",
-                "script": "3．高叔叔从小就养成了早睡早起的习惯。"
-            },
-            {
-                "num": 4,
-                "text": "4．★ 他想去打网球。",
-                "correct": "√",
-                "script": "4．今天天气真好，咱们去打网球吧。"
-            },
-            {
-                "num": 5,
-                "text": "5．★ 那个笑话很有意思。",
-                "correct": "√",
-                "script": "5．刚才听的那个笑话太好笑了。"
-            },
-            {
-                "num": 6,
-                "text": "6．★ 司机认识路。",
-                "correct": "√",
-                "script": "6．放心吧，这条路我走过很多次。"
-            },
-            {
-                "num": 7,
-                "text": "7．★ 她不想换衣服。",
-                "correct": "×",
-                "script": "7．这件裙子太短了，我去换一件。"
-            },
-            {
-                "num": 8,
-                "text": "8．★ 邻居正在搬家。",
-                "correct": "×",
-                "script": "8．隔壁怎么这么吵？是不是在装修？"
-            },
-            {
-                "num": 9,
-                "text": "9．★ 弟弟学会了骑自行车。",
-                "correct": "√",
-                "script": "9．弟弟终于学会了骑自行车。"
-            },
-            {
-                "num": 10,
-                "text": "10．★ 他现在是经理了。",
-                "correct": "√",
-                "script": "10．他终于被提升为经理了。"
-            }
-        ],
-        "p2_listen": [
-            {
-                "num": 11,
-                "options": [
-                    "A. 干净",
-                    "B. 热闹",
-                    "C. 条件差",
-                    "D. 服务热情"
-                ],
-                "correct": "B",
-                "script": "11．男：这家饭馆生意真好啊。\n女：是啊，这里挺热闹的，菜也很好吃。\n问：这家饭馆怎么样？"
-            },
-            {
-                "num": 12,
-                "options": [
-                    "A. 老师",
-                    "B. 记者",
-                    "C. 售货员",
-                    "D. 出租车司机"
-                ],
-                "correct": "C",
-                "script": "12．女：先生，请问您想买什么样的衬衫？\n男：我想看看蓝色的。\n问：女的最可能是做什么的？"
-            },
-            {
-                "num": 13,
-                "options": [
-                    "A. 下周再来",
-                    "B. 最好别买",
-                    "C. 价格太高",
-                    "D. 先参观一下"
-                ],
-                "correct": "A",
-                "script": "13．男：这几款笔记本电脑都在打折。\n女：今天没带够钱，咱们下周再来买吧。\n问：女的是什么意思？"
-            },
-            {
-                "num": 14,
-                "options": [
-                    "A. 上网",
-                    "B. 玩游戏",
-                    "C. 洗碗筷",
-                    "D. 看电视"
-                ],
-                "correct": "D",
-                "script": "14．女：作业做完了吗？怎么又在看电视？\n男：做完了，我再看十分钟就去睡觉。\n问：男的正在做什么？"
-            },
-            {
-                "num": 15,
-                "options": [
-                    "A. 有些着急",
-                    "B. 刚下火车",
-                    "C. 行李箱丢了",
-                    "D. 提前回来了"
-                ],
-                "correct": "A",
-                "script": "15．男：你怎么一直在看手表？\n女：我和客户约了九点，现在都八点四十了，路上还堵车。\n问：女的现在心情怎么样？"
-            },
-            {
-                "num": 16,
-                "options": [
-                    "A. 教室",
-                    "B. 公园西门",
-                    "C. 学校东门",
-                    "D. 图书馆门口"
-                ],
-                "correct": "C",
-                "script": "16．女：明天早上八点半在学校东门集合。\n男：好的，我知道了。\n问：他们明天在哪儿集合？"
-            },
-            {
-                "num": 17,
-                "options": [
-                    "A. 迟到了",
-                    "B. 拿错伞了",
-                    "C. 忘密码了",
-                    "D. 弄错顺序了"
-                ],
-                "correct": "B",
-                "script": "17．男：这把伞不是我的。\n女：不好意思，我拿错伞了。\n问：女的怎么了？"
-            },
-            {
-                "num": 18,
-                "options": [
-                    "A. 夏天快来了",
-                    "B. 天气暖和了",
-                    "C. 昨晚下雪了",
-                    "D. 现在是秋季"
-                ],
-                "correct": "D",
-                "script": "18．女：树叶都变红变黄了。\n男：是啊，现在是秋季。\n问：现在是什么季节？"
-            },
-            {
-                "num": 19,
-                "options": [
-                    "A. 坏了",
-                    "B. 没纸了",
-                    "C. 断电了",
-                    "D. 卡纸了"
-                ],
-                "correct": "B",
-                "script": "19．男：打印机怎么不打印了？\n女：里面的纸用完了。\n问：打印机怎么了？"
-            },
-            {
-                "num": 20,
-                "options": [
-                    "A. 准备出差",
-                    "B. 被批评了",
-                    "C. 干得不错",
-                    "D. 反对加班"
-                ],
-                "correct": "C",
-                "script": "20．女：经理，这个月的任务完成了。\n男：大家干得不错！\n问：关于大家，可以知道什么？"
-            },
-            {
-                "num": 21,
-                "options": [
-                    "A. 银行",
-                    "B. 理发店",
-                    "C. 大使馆",
-                    "D. 公共汽车站"
-                ],
-                "correct": "A",
-                "script": "21．男：请问取款机在哪儿？\n女：一楼大厅左边就是银行。\n问：男的要去哪儿？"
-            },
-            {
-                "num": 22,
-                "options": [
-                    "A. 新闻",
-                    "B. 中文",
-                    "C. 法律",
-                    "D. 经济"
-                ],
-                "correct": "C",
-                "script": "22．女：小张学的是什么专业？\n男：他学的是法律。\n问：小张学的是什么专业？"
-            },
-            {
-                "num": 23,
-                "options": [
-                    "A. 不用客气",
-                    "B. 忘记时间了",
-                    "C. 要打扮一下",
-                    "D. 有别的约会"
-                ],
-                "correct": "D",
-                "script": "23．男：今晚一起吃个饭吧？\n女：今晚我有别的约会。\n问：女的为什么不去吃饭？"
-            },
-            {
-                "num": 24,
-                "options": [
-                    "A. 很乱",
-                    "B. 很脏",
-                    "C. 很整齐",
-                    "D. 擦得很亮"
-                ],
-                "correct": "A",
-                "script": "24．女：你的房间怎么这么乱？\n男：我马上收拾。\n问：房间怎么样？"
-            },
-            {
-                "num": 25,
-                "options": [
-                    "A. 感冒了",
-                    "B. 没找到他",
-                    "C. 不敢告诉他",
-                    "D. 没调查清楚"
-                ],
-                "correct": "B",
-                "script": "25．男：你去找到李老师了吗？\n女：我去他办公室了，但是没找到他。\n问：女的怎么了？"
-            }
-        ],
-        "p3_listen": [
-            {
-                "num": 26,
-                "options": [
-                    "A. 很无聊",
-                    "B. 不精彩",
-                    "C. 非常好",
-                    "D. 没小说好看"
-                ],
-                "correct": "C",
-                "script": "26．男：昨晚的京剧演出怎么样？女：非常好！问：演出怎么样？"
-            },
-            {
-                "num": 27,
-                "options": [
-                    "A. 跳舞",
-                    "B. 打网球",
-                    "C. 踢足球",
-                    "D. 看杂志"
-                ],
-                "correct": "B",
-                "script": "27．女：周末你有什么打算？男：我想去打网球。问：男的周末想做什么？"
-            },
-            {
-                "num": 28,
-                "options": [
-                    "A. 住院了",
-                    "B. 肚子疼",
-                    "C. 被骗了",
-                    "D. 没被邀请"
-                ],
-                "correct": "A",
-                "script": "28．男：听说老王住院了？女：他得了感冒，住几天院就好了。问：老王怎么了？"
-            },
-            {
-                "num": 29,
-                "options": [
-                    "A. 妈妈反对",
-                    "B. 还没放暑假",
-                    "C. 认识时间短",
-                    "D. 缺少共同语言"
-                ],
-                "correct": "C",
-                "script": "29．女：他们俩怎么这么快就结婚了？男：虽然认识时间短，但感情很好。问：大家觉得奇怪是因为什么？"
-            },
-            {
-                "num": 30,
-                "options": [
-                    "A. 很失望",
-                    "B. 很吃惊",
-                    "C. 有点儿后悔",
-                    "D. 有点儿紧张"
-                ],
-                "correct": "D",
-                "script": "30．男：马上就要上台了。女：心里有点儿紧张。问：女的心情怎么样？"
-            },
-            {
-                "num": 31,
-                "options": [
-                    "A. 奶奶在家",
-                    "B. 男的饿了",
-                    "C. 电话没响",
-                    "D. 奶奶在听广播"
-                ],
-                "correct": "A",
-                "script": "31．女：奶奶一个人在家行吗？男：放心吧，奶奶在家挺好的。问：关于奶奶，可以知道什么？"
-            },
-            {
-                "num": 32,
-                "options": [
-                    "A. 变化很大",
-                    "B. 气温很低",
-                    "C. 风景美丽",
-                    "D. 天气干燥"
-                ],
-                "correct": "D",
-                "script": "32．男：北方冬天的天气怎么样？女：比较冷，而且非常干燥。问：北方冬天的天气怎么样？"
-            },
-            {
-                "num": 33,
-                "options": [
-                    "A. 搬沙发",
-                    "B. 修冰箱",
-                    "C. 挂地图",
-                    "D. 打扫街道"
-                ],
-                "correct": "A",
-                "script": "33．女：你能帮我抬一下沙发吗？男：没问题。问：他们要做什么？"
-            },
-            {
-                "num": 34,
-                "options": [
-                    "A. 报道",
-                    "B. 总结",
-                    "C. 通知",
-                    "D. 证明"
-                ],
-                "correct": "B",
-                "script": "34．男：小张，年终总结写好了吗？女：写好了。问：小张写好了什么？"
-            },
-            {
-                "num": 35,
-                "options": [
-                    "A. 季节",
-                    "B. 网站",
-                    "C. 日记",
-                    "D. 电脑"
-                ],
-                "correct": "D",
-                "script": "35．女：我想买台新电脑。男：去科技市场看看吧。问：女的想买什么？"
-            },
-            {
-                "num": 36,
-                "options": [
-                    "A. 经理",
-                    "B. 护士",
-                    "C. 大夫",
-                    "D. 警察"
-                ],
-                "correct": "A",
-                "script": "36．男：王经理，请您签字。女：好的。问：女的是做什么的？"
-            },
-            {
-                "num": 37,
-                "options": [
-                    "A. 很帅",
-                    "B. 非常勇敢",
-                    "C. 喜欢开玩笑",
-                    "D. 个子比较矮"
-                ],
-                "correct": "C",
-                "script": "37．女：小高性格怎么样？男：他很喜欢开玩笑。问：小高有什么特点？"
-            },
-            {
-                "num": 38,
-                "options": [
-                    "A. 800 元",
-                    "B. 1000 元",
-                    "C. 1200 元",
-                    "D. 10000 元"
-                ],
-                "correct": "B",
-                "script": "38．男：打折后只要1000元。女：挺便宜的。问：打折后多少钱？"
-            },
-            {
-                "num": 39,
-                "options": [
-                    "A. 有点儿旧",
-                    "B. 一共两层",
-                    "C. 离公司近",
-                    "D. 有两个人住"
-                ],
-                "correct": "D",
-                "script": "39．女：房子住着怎么样？男：我和同事两个人住。问：关于房子，可以知道什么？"
-            },
-            {
-                "num": 40,
-                "options": [
-                    "A. 管理严格",
-                    "B. 不太关心",
-                    "C. 多表扬他们",
-                    "D. 陪他们读书"
-                ],
-                "correct": "C",
-                "script": "40．一段话：多表扬他们能增加孩子的信心。问：这段话建议怎么教育孩子？"
-            },
-            {
-                "num": 41,
-                "options": [
-                    "A. 20%",
-                    "B. 40%",
-                    "C. 50%",
-                    "D. 60%"
-                ],
-                "correct": "C",
-                "script": "41．一段话：有近50%的人习惯在睡前看手机。问：看手机的人占多少？"
-            },
-            {
-                "num": 42,
-                "options": [
-                    "A. 信任朋友",
-                    "B. 理解别人",
-                    "C. 获得尊重",
-                    "D. 知道想要什么"
-                ],
-                "correct": "D",
-                "script": "42．一段话：人生的关键是要明白自己真正想要什么。问：人生的关键是什么？"
-            },
-            {
-                "num": 43,
-                "options": [
-                    "A. 幸福",
-                    "B. 教育",
-                    "C. 责任",
-                    "D. 民族"
-                ],
-                "correct": "A",
-                "script": "43．一段话：身体健康、生活平安就是最大的幸福。问：这段话主要谈什么？"
-            },
-            {
-                "num": 44,
-                "options": [
-                    "A. 对人友好",
-                    "B. 做事粗心",
-                    "C. 会考虑问题",
-                    "D. 喜欢回忆过去"
-                ],
-                "correct": "C",
-                "script": "44．一段话：成熟的人遇到困难时更会全面地考虑问题。问：成熟的人有什么特点？"
-            },
-            {
-                "num": 45,
-                "options": [
-                    "A. 竞争的烦恼",
-                    "B. 什么是成熟",
-                    "C. 要学会原谅",
-                    "D. 不要可怜别人"
-                ],
-                "correct": "B",
-                "script": "45．一段话：成熟不仅是年龄的增长，更是心理的完善。问：这段话主要谈什么？"
-            }
-        ],
-        "p1_read": [
-            {
-                "num": 46,
-                "text": "46. 现在改变（  ）？恐怕晚了吧？来不及了。",
-                "options": [
-                    "A. 暂时",
-                    "B. 主意",
-                    "C. 导游",
-                    "D. 坚持",
-                    "E. 凉快",
-                    "F. 推迟"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 47,
-                "text": "47. 这儿树多，比路边（  ）多了，咱们在这儿坐一会儿吧。",
-                "options": [
-                    "A. 暂时",
-                    "B. 主意",
-                    "C. 导游",
-                    "D. 坚持",
-                    "E. 凉快",
-                    "F. 推迟"
-                ],
-                "correct": "E"
-            },
-            {
-                "num": 48,
-                "text": "48. 别担心，这只是（  ）的，很快就会好起来。",
-                "options": [
-                    "A. 暂时",
-                    "B. 主意",
-                    "C. 导游",
-                    "D. 坚持",
-                    "E. 凉快",
-                    "F. 推迟"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 49,
-                "text": "49. 他在北京当（  ），对各条街道都很熟悉。",
-                "options": [
-                    "A. 暂时",
-                    "B. 主意",
-                    "C. 导游",
-                    "D. 坚持",
-                    "E. 凉快",
-                    "F. 推迟"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 50,
-                "text": "50. 天气预报说今天下午有雨，活动（  ）到明天举行。",
-                "options": [
-                    "A. 暂时",
-                    "B. 主意",
-                    "C. 导游",
-                    "D. 坚持",
-                    "E. 凉快",
-                    "F. 推迟"
-                ],
-                "correct": "F"
-            },
-            {
-                "num": 51,
-                "text": "51. A：希望我们的工作能让您满意。\n    B：我非常满意，一切都（  ）得很好，谢谢你们。",
-                "options": [
-                    "A. 害羞",
-                    "B. 羡慕",
-                    "C. 温度",
-                    "D. 起来",
-                    "E. 差不多",
-                    "F. 安排"
-                ],
-                "correct": "F"
-            },
-            {
-                "num": 52,
-                "text": "52. A：王师傅，您是北方人吧？\n    B：对，我是北京人，在南方（  ）工作10年了。",
-                "options": [
-                    "A. 害羞",
-                    "B. 羡慕",
-                    "C. 温度",
-                    "D. 起来",
-                    "E. 差不多",
-                    "F. 安排"
-                ],
-                "correct": "E"
-            },
-            {
-                "num": 53,
-                "text": "53. A：我昨天晚上做了个特别有意思的梦，你听着……\n    B：奇怪，一般人醒了就想不（  ）自己做了什么梦，你怎么总能记住？",
-                "options": [
-                    "A. 害羞",
-                    "B. 羡慕",
-                    "C. 温度",
-                    "D. 起来",
-                    "E. 差不多",
-                    "F. 安排"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 54,
-                "text": "54. A：你妹妹很可爱， लेकिन好像不太爱说话。\n    B：她有点儿（  ），等跟大家熟悉了就好了。",
-                "options": [
-                    "A. 害羞",
-                    "B. 羡慕",
-                    "C. 温度",
-                    "D. 起来",
-                    "E. 差不多",
-                    "F. 安排"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 55,
-                "text": "55. A：他的汉语说得很流利，真让人（  ）。\n    B：他是翻译，当然很厉害。",
-                "options": [
-                    "A. 害羞",
-                    "B. 羡慕",
-                    "C. 温度",
-                    "D. 起来",
-                    "E. 差不多",
-                    "F. 安排"
-                ],
-                "correct": "B"
-            }
-        ],
-        "p2_read": [
-            {
-                "num": 56,
-                "text": "56. A 现在很多女孩都认为瘦才是美的\n    B 其实健康才是最重要的\n    C 于是都努力减肥",
-                "correct": "ACB"
-            },
-            {
-                "num": 57,
-                "text": "57. A 它不适合在南方生长\n    B 这种红色的植物在北方很常见\n    C 不过由于受气候的限制",
-                "correct": "BCA"
-            },
-            {
-                "num": 58,
-                "text": "58. A 与他们握手并向他们表示祝贺\n    B 他走到研究生代表前\n    C 会议结束后",
-                "correct": "BCA"
-            },
-            {
-                "num": 59,
-                "text": "59. A 这段时间，机场的乘客比平时几乎多了两倍\n    B 他们每天至少要工作 10 个小时\n    C 为保证所有航班都能按时起飞",
-                "correct": "CAB"
-            },
-            {
-                "num": 60,
-                "text": "60. A 但过程比结果更重要\n    B 而且你还年轻，一切都可以重新开始\n    C 尽管这个计划失败了",
-                "correct": "CAB"
-            },
-            {
-                "num": 61,
-                "text": "61. A 除了自己留一小部分外\n    B 白先生每个月发了工资和奖金后\n    C 把大部分都交给了妻子",
-                "correct": "BCA"
-            },
-            {
-                "num": 62,
-                "text": "62. A 连五六十岁的老人都每人一个\n    B 我刚到那个城市就发现好多人都戴这种帽子\n    C 后来才知道戴这种帽子有很多好处",
-                "correct": "BAC"
-            },
-            {
-                "num": 63,
-                "text": "63. A 它就能学会很多东西\n    B 哥哥的那只大黑狗聪明极了\n    C 只要稍微花点儿时间教教它",
-                "correct": "ACB"
-            },
-            {
-                "num": 64,
-                "text": "64. A 我们从 2 月 17 号开始，到 3 月底\n    B 大概可以提供 3000 多个工作机会\n    C 还将举办 5 场招聘会",
-                "correct": "ABC"
-            },
-            {
-                "num": 65,
-                "text": "65. A 实际上，有个简单的办法可以拒绝接收垃圾邮件\n    B 每天打开电子信箱，总会收到一些垃圾邮件\n    C 这真是件让人烦恼的事",
-                "correct": "BCA"
-            }
-        ],
-        "p3_read": [
-            {
-                "num": 66,
-                "text": "66. 男人和女人在很多方面是不相同的。例如，在工作中遇到了不愉快的事，女人喜欢跟丈夫说。\n★ 女人在工作中遇到不高兴的事，会：",
-                "options": [
-                    "A 流泪",
-                    "B 跟丈夫说",
-                    "C 请父母帮忙",
-                    "D 去商场购物"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 67,
-                "text": "67. 什么是朋友？朋友是在你得意时提醒你不要骄傲的人；在你失败时鼓励你的人。\n★ 这段话主要谈的是：",
-                "options": [
-                    "A 性别",
-                    "B 礼貌",
-                    "C 友谊",
-                    "D 理想"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 68,
-                "text": "68. 由于没好好复习，今天考得不怎么样。\n★ 关于今天的考试，可以知道：",
-                "options": [
-                    "A 题目很简单",
-                    "B 成绩很好",
-                    "C 没考好",
-                    "D 老师很满意"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 69,
-                "text": "69. 遇到不顺心的事，可以找朋友倾诉。\n★ 心情不好时可以：",
-                "options": [
-                    "A 买新车",
-                    "B 找朋友倾诉",
-                    "C 去爬山",
-                    "D 换工作"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 70,
-                "text": "70. 想安静地写点儿东西，这是个不错的选择。\n★ 根据这段话，可以知道这儿：",
-                "options": [
-                    "A 很安静",
-                    "B 比较暗",
-                    "C 有点儿吵",
-                    "D 适合弹钢琴"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 71,
-                "text": "71. 交流能减少人与人之间的误会，使感情逐渐加深。\n★ 通过交流，可以：",
-                "options": [
-                    "A 获得同情",
-                    "B 增进感情",
-                    "C 节约时间",
-                    "D 降低收入"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 72,
-                "text": "72. 我认为，广告会介绍一样东西的优点，却不会说它的缺点。\n★ 我觉得广告：",
-                "options": [
-                    "A 只说优点",
-                    "B 数量太多",
-                    "C 内容是假的",
-                    "D 应该受到重视"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 73,
-                "text": "73. 足球比赛如果 90 分钟后仍然是 0 比 0，可以进行加时赛来决定输赢。\n★ 关于加时赛，可以知道：",
-                "options": [
-                    "A 每场都有",
-                    "B 已被禁止",
-                    "C 要有输赢结果",
-                    "D 时间为 60 分钟"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 74,
-                "text": "74. 小时候他经常生病，长大后他成了一名优秀的长跑运动员。\n★ 人们没有想到的是，他：",
-                "options": [
-                    "A 力气很大",
-                    "B 在医院工作",
-                    "C 身体越来越差",
-                    "D 成为了运动员"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 75,
-                "text": "75. 超市里经常会提供一些免费食品让人们尝一尝，这吸引了许多顾客。\n★ 逛超市时，顾客们被什么吸引了？",
-                "options": [
-                    "A 打折食品",
-                    "B 新鲜水果",
-                    "C 免费尝东西",
-                    "D 漂亮的盒子"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 76,
-                "text": "76. 这本书他看了一个月才看到第 5 页。\n★ 这说明他：",
-                "options": [
-                    "A 很有耐心",
-                    "B 看书很快",
-                    "C 记性不好",
-                    "D 并不是真正爱看书"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 77,
-                "text": "77. 只有坚持到最后的人才能尝到成功的甜头。\n★ 想要成功必须：",
-                "options": [
-                    "A 坚持付出努力",
-                    "B 运气好",
-                    "C 依靠朋友",
-                    "D 有名气"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 78,
-                "text": "78. 遇到堵车时，不要焦虑，可以听听音乐，放松一下心情。\n★ 堵车时可以：",
-                "options": [
-                    "A 大声喊叫",
-                    "B 下车跑步",
-                    "C 听听音乐",
-                    "D 打电话骂人"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 79,
-                "text": "79. 养成了良好的生活习惯，身体才会健康。\n★ 这段话强调：",
-                "options": [
-                    "A 饮食结构",
-                    "B 锻炼方法",
-                    "C 良好习惯的重要性",
-                    "D 睡眠时间"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 80,
-                "text": "80. 一个人如果没有责任感，就很难得到别人的信任。\n★ 责任感能让人：",
-                "options": [
-                    "A 获得信任",
-                    "B 赚钱更多",
-                    "C 不生病",
-                    "D 变帅"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 81,
-                "text": "81. 学习语言需要多听多说，不要害怕说错。\n★ 学习语言要：",
-                "options": [
-                    "A 多买字典",
-                    "B 不怕说错多练习",
-                    "C 只写不说",
-                    "D 不听课"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 82,
-                "text": "82. 妈妈抱着把小手表吃进肚子里的儿子来到医院。\n★ 孩子怎么了？",
-                "options": [
-                    "A 发烧了",
-                    "B 流血了",
-                    "C 吃错药了",
-                    "D 把手表吃肚子里的"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 83,
-                "text": "83. 堵车时不妨听听音乐，改变一下心情。\n★ 这段话主要想说明：",
-                "options": [
-                    "A 堵车时怎么办",
-                    "B 要保护环境",
-                    "C 堵车的原因",
-                    "D 汽车的优点"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 84,
-                "text": "84. 减肥需要控制饮食，多做运动。\n★ 减肥需要：",
-                "options": [
-                    "A 吃减肥药",
-                    "B 控制饮食多运动",
-                    "C 每天睡觉",
-                    "D 喝很多水"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 85,
-                "text": "85. 积极的态度能让人在遇到困难时不轻易被打倒。\n★ 积极的态度可以：",
-                "options": [
-                    "A 让人发财",
-                    "B 让人勇敢面对困难",
-                    "C 让人不生病",
-                    "D 让人变年轻"
-                ],
-                "correct": "B"
-            }
-        ],
-        "p1_write": [
-            {
-                "num": 86,
-                "words": "86. 中午 / 又酸又辣 / 的 / 菜",
-                "correct": [
-                    "中午的菜又酸又辣。"
-                ]
-            },
-            {
-                "num": 87,
-                "words": "87. 很多人的 / 注意 / 引起了 / 那篇文章",
-                "correct": [
-                    "那篇文章引起了很多人的注意。"
-                ]
-            },
-            {
-                "num": 88,
-                "words": "88. 森林 / 狮子 / 里 / 住着 / 一群",
-                "correct": [
-                    "森林里住着一群狮子。"
-                ]
-            },
-            {
-                "num": 89,
-                "words": "89. 香蕉皮 / 请 / 扔 / 垃圾桶里 / 把",
-                "correct": [
-                    "请把香蕉皮扔垃圾桶里。"
-                ]
-            },
-            {
-                "num": 90,
-                "words": "90. 慢慢 / 积累的 / 是需要 / 知识",
-                "correct": [
-                    "知识是需要慢慢积累的。"
-                ]
-            },
-            {
-                "num": 91,
-                "words": "91. 他父亲 / 当地的 / 一位律师 / 是",
-                "correct": [
-                    "他父亲是当地的一位律师。"
-                ]
-            },
-            {
-                "num": 92,
-                "words": "92. 小弟弟 / 打针 / 邻居家 / 的 / 害怕",
-                "correct": [
-                    "邻居家的小弟弟害怕打针。"
-                ]
-            },
-            {
-                "num": 93,
-                "words": "93. 果然是 / 这 / 好消息 / 一个激动人心的",
-                "correct": [
-                    "这果然是一个激动人心的好消息。"
-                ]
-            },
-            {
-                "num": 94,
-                "words": "94. 不符合 / 宾馆的 / 规定 / 这样做",
-                "correct": [
-                    "这样做不符合宾馆的规定。"
-                ]
-            },
-            {
-                "num": 95,
-                "words": "95. 集合 / 到底什么时候 / 呢 / 明天",
-                "correct": [
-                    "明天到底什么时候集合呢？"
-                ]
-            }
-        ],
-        "p2_write": [
-            {
-                "num": 96,
-                "word": "厚",
-                "img_num": 1
-            },
-            {
-                "num": 97,
-                "word": "区别",
-                "img_num": 2
-            },
-            {
-                "num": 98,
-                "word": "难受",
-                "img_num": 3
-            },
-            {
-                "num": 99,
-                "word": "信心",
-                "img_num": 4
-            },
-            {
-                "num": 100,
-                "word": "躺",
-                "img_num": 5
-            }
-        ]
-    },
-    "H41218": {
-        "p1_listen": [
-            {
-                "num": 1,
-                "text": "1．★ 别让工作影响生活。",
-                "correct": "√",
-                "script": "1．工作只是生活的一部分，千万不要把工作中的不愉快带到生活中来。"
-            },
-            {
-                "num": 2,
-                "text": "2．★ 人们离不开水。",
-                "correct": "√",
-                "script": "2．阳光、空气和水，无论是对动植物，还是对人来说，都是不可缺少的。"
-            },
-            {
-                "num": 3,
-                "text": "3．★ 考试那天他很轻松。",
-                "correct": "×",
-                "script": "3．因为没有好好复习，考试那天他有点儿紧张。"
-            },
-            {
-                "num": 4,
-                "text": "4．★ 妻子容易被感动。",
-                "correct": "√",
-                "script": "4．我妻子特别容易被感动，看电影时常流眼泪。"
-            },
-            {
-                "num": 5,
-                "text": "5．★ 不要担心失败。",
-                "correct": "√",
-                "script": "5．失败并不可怕，下一次就可能成功。"
-            },
-            {
-                "num": 6,
-                "text": "6．★ 不要忘记过去。",
-                "correct": "×",
-                "script": "6．过去的就让它过去吧，重要的是向前看。"
-            },
-            {
-                "num": 7,
-                "text": "7．★ 北京现在是冬季。",
-                "correct": "×",
-                "script": "7．北京的秋天最舒服。"
-            },
-            {
-                "num": 8,
-                "text": "8．★ 幸福没有标准答案。",
-                "correct": "√",
-                "script": "8．每个人对幸福的理解都不一样，没有统一标准。"
-            },
-            {
-                "num": 9,
-                "text": "9．★ 他们在出租车上。",
-                "correct": "×",
-                "script": "9．各位乘客，欢迎乘坐本次列车。"
-            },
-            {
-                "num": 10,
-                "text": "10．★ 出发时间又推迟了。",
-                "correct": "×",
-                "script": "10．我们的航班将按时起飞。"
-            }
-        ],
-        "p2_listen": [
-            {
-                "num": 11,
-                "options": [
-                    "A. 很无聊",
-                    "B. 很有趣",
-                    "C. 很有名",
-                    "D. 很流行"
-                ],
-                "correct": "B",
-                "script": "11．男：你看过这部电影吗？\n男：看过，剧情很有趣。\n问：这部电影怎么样？"
-            },
-            {
-                "num": 12,
-                "options": [
-                    "A. 擦不掉",
-                    "B. 打扫教室",
-                    "C. 家具要留着",
-                    "D. 质量不太好"
-                ],
-                "correct": "C",
-                "script": "12．女：旧家具质量挺好的，都留着吧。\n问：女的是什么意思？"
-            },
-            {
-                "num": 13,
-                "options": [
-                    "A. 东边",
-                    "B. 西边",
-                    "C. 南边",
-                    "D. 北边"
-                ],
-                "correct": "A",
-                "script": "13．男：图书馆在东边。\n问：图书馆在哪儿？"
-            },
-            {
-                "num": 14,
-                "options": [
-                    "A. 太麻烦",
-                    "B. 想去试试",
-                    "C. 不知道地址",
-                    "D. 要商量一下"
-                ],
-                "correct": "B",
-                "script": "14．女：我也想去试试，明天发简历。\n问：女的打算怎么做？"
-            },
-            {
-                "num": 15,
-                "options": [
-                    "A. 门票免费",
-                    "B. 票还没买",
-                    "C. 女的在道歉",
-                    "D. 表演很精彩"
-                ],
-                "correct": "B",
-                "script": "15．男：票还没买到呢，排队的人太多。\n问：根据对话，可以知道什么？"
-            },
-            {
-                "num": 16,
-                "options": [
-                    "A. 加班",
-                    "B. 爬山",
-                    "C. 打网球",
-                    "D. 打羽毛球"
-                ],
-                "correct": "C",
-                "script": "16．男：周六去打网球怎么样？\n女：好啊！\n问：他们周六打算干什么？"
-            },
-            {
-                "num": 17,
-                "options": [
-                    "A. 香蕉",
-                    "B. 酸菜鱼",
-                    "C. 西红柿汤",
-                    "D. 水果蛋糕"
-                ],
-                "correct": "B",
-                "script": "17．女：今天的酸菜鱼味道真好。\n问：他们在吃什么？"
-            },
-            {
-                "num": 18,
-                "options": [
-                    "A. 银行",
-                    "B. 办公室",
-                    "C. 体育馆",
-                    "D. 理发店"
-                ],
-                "correct": "D",
-                "script": "18．男：理发师，帮我稍微修剪一下。\n问：对话发生在什么地方？"
-            },
-            {
-                "num": 19,
-                "options": [
-                    "A. 口渴",
-                    "B. 生病了",
-                    "C. 刷牙了",
-                    "D. 这儿禁止抽烟"
-                ],
-                "correct": "D",
-                "script": "19．女：餐厅禁止抽烟。\n问：女的提醒男的是什么？"
-            },
-            {
-                "num": 20,
-                "options": [
-                    "A. 脾气不好",
-                    "B. 是位教授",
-                    "C. 打算先工作",
-                    "D. 有点儿后悔"
-                ],
-                "correct": "C",
-                "script": "20．女：我打算先工作，积累经验。\n问：女的有什么打算？"
-            },
-            {
-                "num": 21,
-                "options": [
-                    "A. 哥哥",
-                    "B. 弟弟",
-                    "C. 大夫",
-                    "D. 护士"
-                ],
-                "correct": "A",
-                "script": "21．女：这是你哥哥吗？\n男：对，他比我大两岁。\n问：照片上的人是男的的谁？"
-            },
-            {
-                "num": 22,
-                "options": [
-                    "A. 座位",
-                    "B. 洗手间",
-                    "C. 服务员",
-                    "D. 塑料袋"
-                ],
-                "correct": "A",
-                "script": "22．男：请问这个座位有人吗？\n女：没有，您坐吧。\n问：男的在找什么？"
-            },
-            {
-                "num": 23,
-                "options": [
-                    "A. 被骗了",
-                    "B. 请假了",
-                    "C. 出差了",
-                    "D. 离开公司了"
-                ],
-                "correct": "D",
-                "script": "23．男：他上周就已经离开公司了。\n问：关于小王，可以知道什么？"
-            },
-            {
-                "num": 24,
-                "options": [
-                    "A. 问路",
-                    "B. 填表格",
-                    "C. 修自行车",
-                    "D. 收拾房间"
-                ],
-                "correct": "A",
-                "script": "24．男：请问去地铁站怎么走？\n问：男的在做什么？"
-            },
-            {
-                "num": 25,
-                "options": [
-                    "A. 下班后",
-                    "B. 半小时后",
-                    "C. 喝完茶后",
-                    "D. 明天中午"
-                ],
-                "correct": "A",
-                "script": "25．男：等下班后吧。\n问：男的建议什么时候去？"
-            }
-        ],
-        "p3_listen": [
-            {
-                "num": 26,
-                "options": [
-                    "A. 裤子脏了",
-                    "B. 手机坏了",
-                    "C. 比赛输了",
-                    "D. 没考上博士"
-                ],
-                "correct": "C",
-                "script": "26．男：篮球比赛输了。问：男的为什么难过？"
-            },
-            {
-                "num": 27,
-                "options": [
-                    "A. 是演员",
-                    "B. 十分幽默",
-                    "C. 会弹钢琴",
-                    "D. 同意帮忙"
-                ],
-                "correct": "D",
-                "script": "27．男：没问题，包在我身上。问：男的是什么态度？"
-            },
-            {
-                "num": 28,
-                "options": [
-                    "A. 火车站",
-                    "B. 公园门口",
-                    "C. 宾馆门口",
-                    "D. 公共汽车上"
-                ],
-                "correct": "B",
-                "script": "28．女：明天早上八点在公园门口。问：他们在哪儿集合？"
-            },
-            {
-                "num": 29,
-                "options": [
-                    "A. 手表丢了",
-                    "B. 在读硕士",
-                    "C. 没戴眼镜",
-                    "D. 想买葡萄"
-                ],
-                "correct": "D",
-                "script": "29．男：我想买点儿葡萄回去。问：男的想买什么？"
-            },
-            {
-                "num": 30,
-                "options": [
-                    "A. 很吃惊",
-                    "B. 在看演出",
-                    "C. 接受邀请",
-                    "D. 快过生日了"
-                ],
-                "correct": "C",
-                "script": "30．女：我一定准时参加！问：女的怎么决定？"
-            },
-            {
-                "num": 31,
-                "options": [
-                    "A. 下雨了",
-                    "B. 正在下雪",
-                    "C. 气温很高",
-                    "D. 风刮得很大"
-                ],
-                "correct": "B",
-                "script": "31．女：快看外面！下雪了！问：天气怎么样？"
-            },
-            {
-                "num": 32,
-                "options": [
-                    "A. 没重点",
-                    "B. 声音大",
-                    "C. 有上海味儿",
-                    "D. 语法不太好"
-                ],
-                "correct": "C",
-                "script": "32．男：听他说话带有上海口音。问：他的普通话有什么特点？"
-            },
-            {
-                "num": 33,
-                "options": [
-                    "A. 饿了",
-                    "B. 很激动",
-                    "C. 很伤心",
-                    "D. 忘记密码了"
-                ],
-                "correct": "A",
-                "script": "33．男：中午没吃饭，现在饿坏了。问：男的怎么了？"
-            },
-            {
-                "num": 34,
-                "options": [
-                    "A. 骑马",
-                    "B. 超车",
-                    "C. 打篮球",
-                    "D. 在江边游泳"
-                ],
-                "correct": "D",
-                "script": "34．男：夏天去江边游泳非常凉快。问：男的提到什么运动？"
-            },
-            {
-                "num": 35,
-                "options": [
-                    "A. 扔垃圾",
-                    "B. 洗盘子",
-                    "C. 买帽子",
-                    "D. 抬洗衣机"
-                ],
-                "correct": "A",
-                "script": "35．女：把这包垃圾顺便带下楼扔了吧。问：女的让男的做什么？"
-            },
-            {
-                "num": 36,
-                "options": [
-                    "A. 管理",
-                    "B. 信任",
-                    "C. 懂得放弃",
-                    "D. 学会原谅"
-                ],
-                "correct": "B",
-                "script": "36．女：人与人交往最重要的是相互信任。问：女的认为最重要的是什么？"
-            },
-            {
-                "num": 37,
-                "options": [
-                    "A. 主动握手",
-                    "B. 尊重自己",
-                    "C. 多提醒别人",
-                    "D. 首先相信别人"
-                ],
-                "correct": "D",
-                "script": "37．一段话：要获得别人的信任，首先你要相信别人。问：这段话建议怎么做？"
-            },
-            {
-                "num": 38,
-                "options": [
-                    "A. 吸引顾客",
-                    "B. 感谢顾客",
-                    "C. 表示祝贺",
-                    "D. 减少浪费"
-                ],
-                "correct": "A",
-                "script": "38．一段话：商场打折主要是为了吸引更多的顾客。问：商场打折为了什么？"
-            },
-            {
-                "num": 39,
-                "options": [
-                    "A. 不好卖",
-                    "B. 不值得买",
-                    "C. 比平时便宜",
-                    "D. 很难引起注意"
-                ],
-                "correct": "C",
-                "script": "39．一段话：打折商品比平时便宜。问：打折商品有什么特点？"
-            },
-            {
-                "num": 40,
-                "options": [
-                    "A. 爱说话",
-                    "B. 爱跳舞",
-                    "C. 生气了",
-                    "D. 讨厌画画儿"
-                ],
-                "correct": "A",
-                "script": "40．女：小王非常爱说话。问：小王有什么特点？"
-            },
-            {
-                "num": 41,
-                "options": [
-                    "A. 哭了",
-                    "B. 很粗心",
-                    "C. 有些害羞",
-                    "D. 肚子难受"
-                ],
-                "correct": "C",
-                "script": "41．男：她有些害羞，脸都红了。问： corporate她怎么了？"
-            },
-            {
-                "num": 42,
-                "options": [
-                    "A. 讲笑话",
-                    "B. 与人竞争",
-                    "C. 翻译文章",
-                    "D. 拒绝帮忙"
-                ],
-                "correct": "D",
-                "script": "42．一段话：要学会礼貌地拒绝。问：这段话谈论什么？"
-            },
-            {
-                "num": 43,
-                "options": [
-                    "A. 赚的钱多",
-                    "B. 条件允许",
-                    "C. 经验丰富",
-                    "D. 觉得快乐"
-                ],
-                "correct": "D",
-                "script": "43．一段话：更重要的是你能从中感到快乐。问：选择工作什么最重要？"
-            },
-            {
-                "num": 44,
-                "options": [
-                    "A. 太吵",
-                    "B. 床窄",
-                    "C. 没冰箱",
-                    "D. 房间有点儿暗"
-                ],
-                "correct": "D",
-                "script": "44．女：采光不好，有点儿暗。问：这间房间有什么缺点？"
-            },
-            {
-                "num": 45,
-                "options": [
-                    "A. 学生",
-                    "B. 司机",
-                    "C. 售货员",
-                    "D. 中文教师"
-                ],
-                "correct": "A",
-                "script": "45．男：同学们，今天的作业是预习。问：男的在跟谁说话？"
-            }
-        ],
-        "p1_read": [
-            {
-                "num": 46,
-                "text": "46. 真抱歉，现在路上堵得很厉害，（  ）来不及了。",
-                "options": [
-                    "A. 打针",
-                    "B. 报道",
-                    "C. 共同",
-                    "D. 坚持",
-                    "E. 国际",
-                    "F. 恐怕"
-                ],
-                "correct": "F"
-            },
-            {
-                "num": 47,
-                "text": "47. 我儿子发烧了，我得送他去医院（  ），看样子下午我不能去踢球了。",
-                "options": [
-                    "A. 打针",
-                    "B. 报道",
-                    "C. 共同",
-                    "D. 坚持",
-                    "E. 国际",
-                    "F. 恐怕"
-                ],
-                "correct": "A"
-            },
-            {
-                "num": 48,
-                "text": "48. 今天是“六一”（  ）儿童节，这是全世界儿童的节日。",
-                "options": [
-                    "A. 打针",
-                    "B. 报道",
-                    "C. 共同",
-                    "D. 坚持",
-                    "E. 国际",
-                    "F. 恐怕"
-                ],
-                "correct": "E"
-            },
-            {
-                "num": 49,
-                "text": "49. 他们俩有很多（  ）语言，每次一见面就聊个不停。",
-                "options": [
-                    "A. 打针",
-                    "B. 报道",
-                    "C. 共同",
-                    "D. 坚持",
-                    "E. 国际",
-                    "F. 恐怕"
-                ],
-                "correct": "C"
-            },
-            {
-                "num": 50,
-                "text": "50. 这篇（  ）写得不错，反映了不少问题，有时间的话你可以看看。",
-                "options": [
-                    "A. 打针",
-                    "B. 报道",
-                    "C. 共同",
-                    "D. 坚持",
-                    "E. 国际",
-                    "F. 恐怕"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 51,
-                "text": "51. A：你经常来这条街上逛吗？\n    B：不经常，我（  ）来一趟。这儿离我家挺远的。",
-                "options": [
-                    "A. 精神",
-                    "B. 稍微",
-                    "C. 温度",
-                    "D. 工资",
-                    "E. 大概",
-                    "F. 偶尔"
-                ],
-                "correct": "F"
-            },
-            {
-                "num": 52,
-                "text": "52. A：下午交工作总结，你写好了没？\n    B：差不多了，有个地方我还要（  ）改一下。",
-                "options": [
-                    "A. 精神",
-                    "B. 稍微",
-                    "C. 温度",
-                    "D. 工资",
-                    "E. 大概",
-                    "F. 偶尔"
-                ],
-                "correct": "B"
-            },
-            {
-                "num": 53,
-                "text": "53. A：这个月的（  ）和奖金，一共 8000 元，昨天上午已经打您卡里了。\n    B：好的，谢谢你。",
-                "options": [
-                    "A. 精神",
-                    "B. 稍微",
-                    "C. 温度",
-                    "D. 工资",
-                    "E. 大概",
-                    "F. 偶尔"
-                ],
-                "correct": "D"
-            },
-            {
-                "num": 54,
-                "text": "54. A：这个寒假，你打算去三亚多长时间？\n    B：（  ）两个星期吧，估计月底就能回来。",
-                "options": [
-                    "A. 精神",
-                    "B. 稍微",
-                    "C. 温度",
-                    "D. 工资",
-                    "E. 大概",
-                    "F. 偶尔"
-                ],
-                "correct": "E"
-            },
-            {
-                "num": 55,
-                "text": "55. A：我那件红衬衫呢？你放哪儿了？\n    B：洗了，在外面挂着，还没干呢。你穿这件就很好，很（  ）。",
-                "options": [
-                    "A. 精神",
-                    "B. 稍微",
-                    "C. 温度",
-                    "D. 工资",
-                    "E. 大概",
-                    "F. 偶尔"
-                ],
-                "correct": "A"
-            }
-        ],
-        "p2_read": [
-            {
-                "num": 56,
-                "text": "56. A 相反，会使问题变得更复杂\n    B 不但不能解决任何问题\n    C 现在和当时的情况不同，如果还是使用以前的办法",
-                "correct": "CBA"
-            },
-            {
-                "num": 57,
-                "text": "57. A 今天早上，北京突然下起雪来\n    B 所有航班都无法起飞，所以我先生只好又回来了\n    C 并且越下越大，完全没有要停的意思",
-                "correct": "ACB"
-            },
-            {
-                "num": 58,
-                "text": "58. A 那件事情，我们一直以为是他的错\n    B 但后来才发现，是我们误会他了\n    C 应该由他负全部责任",
-                "correct": "ACB"
-            },
-            {
-                "num": 59,
-                "text": "59. A 毕业以后我们就很少见面了\n    B 但我们一直保持着联系\n    C 感情依然非常好",
-                "correct": "ABC"
-            },
-            {
-                "num": 60,
-                "text": "60. A 结果适得其反\n    B 有些父母对孩子要求过于严格\n    C 给孩子带来了极大的压力",
-                "correct": "CBA"
-            },
-            {
-                "num": 61,
-                "text": "61. A 保持积极乐观的心态\n    B 才能在困境中看到希望\n    C 只有在任何时候都",
-                "correct": "BAC"
-            },
-            {
-                "num": 62,
-                "text": "62. A 这使得他拥有丰富的阅历\n    B 他去过世界上三十多个国家\n    C 说话聊天时总是非常吸引人",
-                "correct": "BCA"
-            },
-            {
-                "num": 63,
-                "text": "63. A 一定要仔细阅读使用说明\n    B 避免因操作不当造成损坏\n    C 在第一次使用新家电前",
-                "correct": "ACB"
-            },
-            {
-                "num": 64,
-                "text": "64. A 积累了丰富的教学经验\n    B 王老师从事教育工作已经三十年了\n    C 深受学生和家长的尊敬",
-                "correct": "BCA"
-            },
-            {
-                "num": 65,
-                "text": "65. A 使得生活变得越来越便捷\n    B 互联网和移动支付的普及\n    C 人们出门甚至不需要带现金",
-                "correct": "BCA"
-            }
-        ],
-        "p3_read": [
-        {
-                "num": 66,
-                "text": "66. 您看，这几种衬衫都不错，不仅颜色好，质量也保证是最好的。怎么样？您选哪种？\n★ 说话人最可能是做什么的？",
-                "options": [
-                        "A. 司机",
-                        "B. 售货员",
-                        "C. 理发师",
-                        "D. 医生"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 67,
-                "text": "67. 习惯就像我们的好朋友，在关键时刻能给我们力量。相反，坏习惯就像坏朋友，会带来麻烦。因此，我们要养成好习惯，改掉坏习惯。\n★ 这段话主要谈：",
-                "options": [
-                        "A. 遵守规定",
-                        "B. 珍惜友谊",
-                        "C. 习惯的作用",
-                        "D. 尊重他人"
-                ],
-                "correct": "C"
-        },
-        {
-                "num": 68,
-                "text": "68. 您看，这里的大门都是用厚木头做的，上面的花纹也是人工雕刻出来的，非常精致。\n★ 关于这个大门，可以知道：",
-                "options": [
-                        "A. 很轻",
-                        "B. 是木头做的",
-                        "C. 坏了",
-                        "D. 太贵了"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 69,
-                "text": "69. 那本杂志的内容十分丰富，里面不仅介绍了许多科学知识，而且语言非常幽默。像我这种对科学完全不感兴趣的人，读起来竟然也会觉得很有趣。\n★ 那本杂志：",
-                "options": [
-                        "A. 页数很多",
-                        "B. 很有意思",
-                        "C. 很难理解",
-                        "D. 是关于艺术的"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 70,
-                "text": "70. 会议还没结束呢，一会儿继续讨论，所以暂时还不知道结果会怎么样。你先别着急，有消息我会第一时间通知你的。\n★ 根据这段话，会议：",
-                "options": [
-                        "A. 刚刚开始",
-                        "B. 还没有结果",
-                        "C. 有许多记者",
-                        "D. 已经顺利结束"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 71,
-                "text": "71. 会一门外语很重要，这样你不仅可以去这个国家旅游，和这个国家的人们交流，而且可以了解这个国家的文化，并向他们介绍自己国家的文化。\n★ 这段话主要谈：",
-                "options": [
-                        "A. 学习方法",
-                        "B. 文化的影响",
-                        "C. 普通话的作用",
-                        "D. 懂外语的好处"
-                ],
-                "correct": "D"
-        },
-        {
-                "num": 72,
-                "text": "72. “面包会有的，牛奶会有的，一切都会好起来的。”所以，不要太难过，不要太担心，因为雨过之后总会是晴天的。\n★ 这段话想告诉我们：",
-                "options": [
-                        "A. 要节约",
-                        "B. 明天会更好",
-                        "C. 要按时吃饭",
-                        "D. 不要受规定的限制"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 73,
-                "text": "73. 经过调查，我们发现：购买我们电脑的人中，有 75%是因为受到我们广告的影响，有 11%的人表示他们从来没看过我们的广告。\n★ 根据调查，可以知道：",
-                "options": [
-                        "A. 电脑很贵",
-                        "B. 广告效果好",
-                        "C. 任务没完成",
-                        "D. 笔记本更受欢迎"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 74,
-                "text": "74. 20 年前，人们还有通过写信交笔友的习惯，하지만进入 21 世纪后，尤其是最近几年，几乎没有人会选择写信了，人们更愿意打电话或上网交流。\n★ 现在人们更愿意：",
-                "options": [
-                        "A. 发传真",
-                        "B. 写日记",
-                        "C. 上网聊天儿",
-                        "D. 阅读报纸杂志"
-                ],
-                "correct": "C"
-        },
-        {
-                "num": 75,
-                "text": "75. 不管是跟朋友约会， 还是一个人出去游玩儿，她都爱把自己打扮得漂漂亮亮。她觉得这样可以给自己带来好心情，自己高兴，别人看着也舒服。\n★ 跟朋友约会时，她：",
-                "options": [
-                        "A. 非常得意",
-                        "B. 会认真打扮",
-                        "C. 会花很多钱",
-                        "D. 喜欢穿裙子"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 76,
-                "text": "76. 小时候，亲戚、邻居们都说我长得像我妈，特别是眼睛和鼻子。 可是长大后，他们说我更像 我爸， 尤其是性格， 对人热情，说话直接。\n★ 根据这段话，他：",
-                "options": [
-                        "A. 很浪漫",
-                        "B. 变帅了",
-                        "C. 特别聪明",
-                        "D. 性格像父亲"
-                ],
-                "correct": "D"
-        },
-        {
-                "num": 77,
-                "text": "77. 他们结婚十几年了，两个人还坚持每天晚上 一起散步、聊天儿。他们的感情那么好， 让朋友们都很羡慕。\n★ 根据这段话，他们：",
-                "options": [
-                        "A. 性格相近",
-                        "B. 刚结婚",
-                        "C. 感情很好",
-                        "D. 不喜欢运动"
-                ],
-                "correct": "C"
-        },
-        {
-                "num": 78,
-                "text": "78. 《现代汉语词典》 是一本很有用的工具书。当你遇到不会读或者不理解的字词时，只要翻翻它，就能找到答案，非常方便。\n★ 《现代汉语词典》：",
-                "options": [
-                        "A. 非常有帮助",
-                        "B. 买不到了",
-                        "C. 词语不多",
-                        "D. 让人 感到烦恼"
-                ],
-                "correct": "A"
-        },
-        {
-                "num": 79,
-                "text": "79. 人在睡觉过程中会做梦，这太正常了。每个人都会做梦，区别只是梦的内容不同、有 的人把梦忘了而已。说自己没做过梦的人，只不过是忘记了。\n★ 关于做梦，下列哪个正确？",
-                "options": [
-                        "A. 影响身体健康",
-                        "B. 人人都会做梦",
-                        "C. 梦都很伤心",
-                        "D. 让人变笨"
-                ],
-                "correct": "B"
-        },
-        {
-                "num": 80,
-                "text": "80-81.\n表扬 也是一门艺术。怎样表扬孩子才会更有效呢？一是表扬要及时，及时的表扬比迟到的表扬更有效果；二是表扬不仅要看 结果，还要看过程，如果孩子努力了，即使结果没成功，也要表扬 他的“好心”和付出。\n★ 怎样的表扬更有效果？",
-                "options": [
-                        "A. 及时的",
-                        "B. 免费的",
-                        "C. 正式的",
-                        "D. 偶尔的"
-                ],
-                "correct": "A"
-        },
-        {
-                "num": 81,
-                "text": "81. ★ 父母表扬孩子的“好心”， 是为了：",
-                "options": [
-                        "A. 鼓励他放弃",
-                        "B. 减少误会",
-                        "C. 积累经验",
-                        "D. 肯定  他的付出"
-                ],
-                "correct": "D"
-        },
-        {
-                "num": 82,
-                "text": "82-83.\n说到理想，人们很自然地 就会 想到：我将来想干什么？想成为一个什么样的人？科学家？老师？医生？警察？其实，明白自己想做什么很重要，知道怎么去做更为关键，否则，理想就 永远只是理想。可惜的是，人们 往往对   这一点重视不够。\n★ 这段话主要谈什么？",
-                "options": [
-                        "A. 理想",
-                        "B. 专业",
-                        "C. 收入",
-                        "D. 友谊"
-                ],
-                "correct": "A"
-        },
-        {
-                "num": 83,
-                "text": "83. ★ 根据这段话，人们对什么不够重视？",
-                "options": [
-                        "A. 健康",
-                        "B. 安全",
-                        "C. 怎么去做",
-                        "D. 自己的缺点"
-                ],
-                "correct": "C"
-        },
-        {
-                "num": 84,
-                "text": "84-85.\n做子女的总希望父母老了 以后能在家中好好休息，不要    那么辛苦。其实，老人   喜欢热闹，害怕孤单，他们需要  别人的重视和关心。所以，多鼓励老人  参加一些社会活动，  让他们觉得自己依然是对  家庭和社会有用的人， 让他们有“被需要”的感觉。\n★ 老人更  喜欢：",
-                "options": [
-                        "A. 开玩笑",
-                        "B. 住在  农村",
-                        "C. 获得重视",
-                        "D. 吃面条儿"
-                ],
-                "correct": "C"
-        },
-        {
-                "num": 85,
-                "text": "85. ★ 这段话主要  谈什么？",
-                "options": [
-                        "A. 要有信心",
-                        "B. 要积累经验",
-                        "C. 遇事要  冷静",
-                        "D. 老人  需要什么"
-                ],
-                "correct": "D"
-        }
-],
-        "p1_write": [
-            {
-                "num": 86,
-                "words": "86. 能力 / 重要 / 比知识 / 更",
-                "correct": [
-                    "能力比知识更重要。"
-                ]
-            },
-            {
-                "num": 87,
-                "words": "87. 爱情 / 并 / 生命的全部 / 不是",
-                "correct": [
-                    "爱情并不是生命的全部。"
-                ]
-            },
-            {
-                "num": 88,
-                "words": "88. 沙发 / 你的钥匙 / 在 / 上",
-                "correct": [
-                    "你的钥匙在沙发上。"
-                ]
-            },
-            {
-                "num": 89,
-                "words": "89. 观众 / 那个电影 / 让 / 很失望",
-                "correct": [
-                    "那个电影让观众很失望。"
-                ]
-            },
-            {
-                "num": 90,
-                "words": "90. 她 / 一遍 / 又重新 / 检查了",
-                "correct": [
-                    "她又重新检查了一遍。"
-                ]
-            },
-            {
-                "num": 91,
-                "words": "91. 顺序 / 别 / 把 / 弄乱了",
-                "correct": [
-                    "别把顺序弄乱了。"
-                ]
-            },
-            {
-                "num": 92,
-                "words": "92. 了 / 寄出去 / 你的申请材料 / 吗",
-                "correct": [
-                    "你的申请材料寄出去了吗？"
-                ]
-            },
-            {
-                "num": 93,
-                "words": "93. 一万公里 / 是 / 这两个城市 / 距离 / 的",
-                "correct": [
-                    "这两个城市的距离是一万公里。"
-                ]
-            },
-            {
-                "num": 94,
-                "words": "94. 很成熟 / 制造技术 / 已经 / 这种电梯的",
-                "correct": [
-                    "这种电梯的制造技术已经很成熟。"
-                ]
-            },
-            {
-                "num": 95,
-                "words": "95. 印象 / 那位导游 / 很深的 / 给我 / 留下了",
-                "correct": [
-                    "那位导游给我留下了很深的印象。"
-                ]
-            }
-        ],
-        "p2_write": [
-            {
-                "num": 96,
-                "word": "咸",
-                "img_num": 1
-            },
-            {
-                "num": 97,
-                "word": "力气",
-                "img_num": 2
-            },
-            {
-                "num": 98,
-                "word": "握手",
-                "img_num": 3
-            },
-            {
-                "num": 99,
-                "word": "合作",
-                "img_num": 4
-            },
-            {
-                "num": 100,
-                "word": "友谊",
-                "img_num": 5
-            }
-        ]
-    }
-}
+# DÀN HÀNG NGANG CHỌN BÀI HỌC NGAY TRÊN TRANG CHÍNH (THÂN THIỆN ĐIỆN THOẠI)
+lesson_keys = list(LESSONS.keys())
 
+if hasattr(st, "pills"):
+    selected_lesson = st.pills(
+        label="Chọn bài học",
+        options=lesson_keys,
+        default=lesson_keys[0],
+        label_visibility="collapsed"
+    )
+    if not selected_lesson:
+        selected_lesson = lesson_keys[0]
+else:
+    selected_lesson = st.radio(
+        label="Chọn bài học",
+        options=lesson_keys,
+        horizontal=True,
+        label_visibility="collapsed"
+    )
 
-EXAM_CODES = list(EXAM_DATA.keys())
-exam_tabs = st.tabs(EXAM_CODES)
+st.markdown("---")
 
-for idx, exam_code in enumerate(EXAM_CODES):
-    data = EXAM_DATA[exam_code]
-    with exam_tabs[idx]:
-        st.markdown(f"## 📋 ĐỀ THI MÃ: **{exam_code}**")
-        
-        sub_tab_listen, sub_tab_read, sub_tab_write = st.tabs(["🎧 听力 (Phần nghe)", "📖 阅读 (Phần đọc)", "✍️ 书写 (Phần viết)"])
-        
-        # ----------------------------------------------------------------------
-        # 1. SUB-TAB PHẦN NGHE (45 CÂU)
-        # ----------------------------------------------------------------------
-        with sub_tab_listen:
-            render_audio_player(exam_code)
-            st.markdown("---")
-            
-            u_l1 = {}
-            st.markdown("#### **第一部分 - 判断对错 (Câu 1 - 10)**")
-            for i, q in enumerate(data["p1_listen"]):
-                c_class = CARD_CLASSES[i % len(CARD_CLASSES)]
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong><br>{q['text']}", unsafe_allow_html=True)
-                ans = st.radio(f"l1_{exam_code}_{q['num']}", ["√", "×"], horizontal=True, key=f"w_l1_{exam_code}_{q['num']}", label_visibility="collapsed")
-                u_l1[q['num']] = ans
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            u_l2 = {}
-            st.markdown("#### **第二部分 - 单项选择 (Câu 11 - 25)**")
-            for i, q in enumerate(data["p2_listen"]):
-                c_class = CARD_CLASSES[(i+1) % len(CARD_CLASSES)]
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong>", unsafe_allow_html=True)
-                ans = st.radio(f"l2_{exam_code}_{q['num']}", q["options"], key=f"w_l2_{exam_code}_{q['num']}", label_visibility="collapsed")
-                u_l2[q['num']] = ans[0] if ans else ""
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            u_l3 = {}
-            st.markdown("#### **第三部分 - 单项选择 (Câu 26 - 45)**")
-            for i, q in enumerate(data["p3_listen"]):
-                c_class = CARD_CLASSES[(i+2) % len(CARD_CLASSES)]
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong>", unsafe_allow_html=True)
-                ans = st.radio(f"l3_{exam_code}_{q['num']}", q["options"], key=f"w_l3_{exam_code}_{q['num']}", label_visibility="collapsed")
-                u_l3[q['num']] = ans[0] if ans else ""
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            if st.button(f"🚀 NỘP BÀI PHẦN NGHE MÃ {exam_code}", key=f"btn_sub_l_{exam_code}"):
-                if not student_name.strip():
-                    st.warning("⚠️ Vui lòng nhập Họ và tên ở đầu trang trước khi nộp bài!")
-                else:
-                    c1 = sum(1 for q in data["p1_listen"] if u_l1.get(q['num']) == q['correct'])
-                    c2 = sum(1 for q in data["p2_listen"] if u_l2.get(q['num']) == q['correct'])
-                    c3 = sum(1 for q in data["p3_listen"] if u_l3.get(q['num']) == q['correct'])
-                    tot_c = c1 + c2 + c3
-                    tot_q = len(data["p1_listen"]) + len(data["p2_listen"]) + len(data["p3_listen"])
-                    sc_100 = (tot_c / tot_q) * 100
-                    
-                    st.success(f"🎉 **Kết quả Phần Nghe ({exam_code}):**\n- Số câu đúng: **{tot_c}/{tot_q}** câu\n- Điểm số: **{sc_100:.1f} / 100 điểm**")
-                    send_score_to_gsheet(student_name, exam_code, "PHẦN NGHE", f"{tot_c}/{tot_q}", sc_100)
-                    
-                    st.markdown("---")
-                    st.markdown("### 🔍 CHI TIẾT CÂU SAI & SCRIPT NGHE:")
-                    for q in data["p1_listen"]:
-                        if u_l1.get(q['num']) != q['correct']:
-                            st.markdown(f"❌ **Câu {q['num']}**: Bạn chọn `{u_l1.get(q['num'])}` | Đáp án đúng: **{q['correct']}**")
-                            with st.expander(f"📖 查看听力文本 (Xem Script Câu {q['num']})"):
-                                st.write(q['script'])
-                    for q in data["p2_listen"]:
-                        if u_l2.get(q['num']) != q['correct']:
-                            st.markdown(f"❌ **Câu {q['num']}**: Bạn chọn `{u_l2.get(q['num'])}` | Đáp án đúng: **{q['correct']}**")
-                            with st.expander(f"📖 查看听力文本 (Xem Script Câu {q['num']})"):
-                                st.write(q['script'])
-                    for q in data["p3_listen"]:
-                        if u_l3.get(q['num']) != q['correct']:
-                            st.markdown(f"❌ **Câu {q['num']}**: Bạn chọn `{u_l3.get(q['num'])}` | Đáp án đúng: **{q['correct']}**")
-                            with st.expander(f"📖 查看听力文本 (Xem Script Câu {q['num']})"):
-                                st.write(q['script'])
+# Gọi hàm hiển thị bài học đã chọn
+if selected_lesson in LESSONS:
+    st.markdown(f"## {selected_lesson}")
+    LESSONS[selected_lesson](student_name)
 
-        # ----------------------------------------------------------------------
-        # 2. SUB-TAB PHẦN ĐỌC (40 CÂU)
-        # ----------------------------------------------------------------------
-        with sub_tab_read:
-            st.markdown("### 二、阅读 (Phần đọc)")
-            u_r1 = {}
-            st.markdown("#### **第一部分 - 选词填空 (Câu 46 - 55)**")
-            for i, q in enumerate(data["p1_read"]):
-                c_class = CARD_CLASSES[i % len(CARD_CLASSES)]
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong><br>{q['text']}", unsafe_allow_html=True)
-                ans = st.radio(f"r1_{exam_code}_{q['num']}", q["options"], key=f"w_r1_{exam_code}_{q['num']}", label_visibility="collapsed")
-                u_r1[q['num']] = ans[0] if ans else ""
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            u_r2 = {}
-            st.markdown("#### **第二部分 - 排列顺序 (Câu 56 - 65)**")
-            for i, q in enumerate(data["p2_read"]):
-                c_class = CARD_CLASSES[(i+1) % len(CARD_CLASSES)]
-                raw_t = q['text'].strip()
-                raw_t = re.sub(r'^\d+[\.．]\s*', '', raw_t)
-                lines = [line.strip() for line in raw_t.splitlines() if line.strip()]
-                formatted_t = '<br>'.join(lines)
-                
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong><br><div style='margin-top:6px !important;'>{formatted_t}</div></div>", unsafe_allow_html=True)
-                ans = st.text_input(f"Nhập thứ tự 3 chữ cái (VD: BAC) cho câu {q['num']}:", key=f"w_r2_{exam_code}_{q['num']}").strip().upper()
-                u_r2[q['num']] = ans
-                
-            u_r3 = {}
-            st.markdown("#### **第三部分 - 阅读理解 (Câu 66 - 85)**")
-            for i, q in enumerate(data["p3_read"]):
-                c_class = CARD_CLASSES[(i+2) % len(CARD_CLASSES)]
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong><br>{q['text'].replace('\n', '<br>')}", unsafe_allow_html=True)
-                ans = st.radio(f"r3_{exam_code}_{q['num']}", q["options"], key=f"w_r3_{exam_code}_{q['num']}", label_visibility="collapsed")
-                u_r3[q['num']] = ans[0] if ans else ""
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            if st.button(f"🚀 NỘP BÀI PHẦN ĐỌC MÃ {exam_code}", key=f"btn_sub_r_{exam_code}"):
-                if not student_name.strip():
-                    st.warning("⚠️ Vui lòng nhập Họ và tên ở đầu trang trước khi nộp bài!")
-                else:
-                    c1 = sum(1 for q in data["p1_read"] if u_r1.get(q['num']) == q['correct'])
-                    c2 = sum(1 for q in data["p2_read"] if u_r2.get(q['num']) == q['correct'])
-                    c3 = sum(1 for q in data["p3_read"] if u_r3.get(q['num']) == q['correct'])
-                    tot_c = c1 + c2 + c3
-                    tot_q = len(data["p1_read"]) + len(data["p2_read"]) + len(data["p3_read"])
-                    sc_100 = (tot_c / tot_q) * 100
-                    
-                    msg = f"🎉 **Kết quả Phần Đọc ({exam_code}):**\n- Số câu đúng: **{tot_c}/{tot_q}** câu\n- Điểm số: **{sc_100:.1f} / 100 điểm**"
-                    st.success(msg)
-                    send_score_to_gsheet(student_name, exam_code, "PHẦN ĐỌC", f"{tot_c}/{tot_q}", sc_100)
-                    
-                    st.markdown("---")
-                    st.markdown("### 🔍 CHI TIẾT CÂU SAI PHẦN ĐỌC:")
-                    for q in data["p1_read"]:
-                        if u_r1.get(q['num']) != q['correct']:
-                            st.markdown(f"❌ **Câu {q['num']}**: Bạn chọn `{u_r1.get(q['num'])}` | Đáp án đúng: **{q['correct']}**")
-                    for q in data["p2_read"]:
-                        if u_r2.get(q['num']) != q['correct']:
-                            st.markdown(f"❌ **Câu {q['num']}**: Bạn điền `{u_r2.get(q['num'])}` | Đáp án đúng: **{q['correct']}**")
-                    for q in data["p3_read"]:
-                        if u_r3.get(q['num']) != q['correct']:
-                            st.markdown(f"❌ **Câu {q['num']}**: Bạn chọn `{u_r3.get(q['num'])}` | Đáp án đúng: **{q['correct']}**")
-
-        # ----------------------------------------------------------------------
-        # 3. SUB-TAB PHẦN VIẾT (15 CÂU)
-        # ----------------------------------------------------------------------
-        with sub_tab_write:
-            st.markdown("### 三、书写 (Phần viết)")
-            st.markdown("#### **第一部分 - 完成句子 (Câu 86 - 95)**")
-            
-            u_w1 = {}
-            for i, q in enumerate(data["p1_write"]):
-                c_class = CARD_CLASSES[i % len(CARD_CLASSES)]
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong> {q['words']}", unsafe_allow_html=True)
-                ans = st.text_input("Nhập câu hoàn chỉnh của bạn tại đây:", key=f"w_w1_{exam_code}_{q['num']}").strip()
-                u_w1[q['num']] = ans
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            st.markdown("#### **第二部分 - 看图造句 (Câu 96 - 100)**")
-            u_w2 = {}
-            for i, q in enumerate(data["p2_write"]):
-                c_class = CARD_CLASSES[(i+1) % len(CARD_CLASSES)]
-                st.markdown(f"<div class='{c_class}'><strong>Câu {q['num']}:</strong> Từ gợi ý: <strong>{q['word']}</strong>", unsafe_allow_html=True)
-                
-                img_idx = i + 1
-                img_jpg = f"{exam_code}_{img_idx}.jpg"
-                img_png = f"{exam_code}_{img_idx}.png"
-                if os.path.exists(img_jpg):
-                    st.image(img_jpg, width=280)
-                elif os.path.exists(img_png):
-                    st.image(img_png, width=280)
-                else:
-                    st.info(f"📷 (Khung xem ảnh bài tập câu {q['num']}: hãy tải file ảnh tên **{exam_code}_{img_idx}.jpg** lên cùng thư mục GitHub nhé!)")
-                    
-                ans = st.text_area("Nhập câu đặt theo tranh của bạn tại đây:", key=f"w_w2_{exam_code}_{q['num']}")
-                u_w2[q['num']] = ans
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-            st.info("📌 Note: Các câu từ 96-100 (đặt câu theo tranh) cô Ngọc sẽ chấm cụ thể sau. Điểm hiển thị bên dưới chỉ mang tính chất tương đối.")
-            
-            if st.button(f"🚀 NỘP BÀI PHẦN VIẾT MÃ {exam_code}", key=f"btn_sub_w_{exam_code}"):
-                if not student_name.strip():
-                    st.warning("⚠️ Vui lòng nhập Họ và tên ở đầu trang trước khi nộp bài!")
-                else:
-                    c1 = 0
-                    for q in data["p1_write"]:
-                        user_ans = u_w1.get(q['num'], '').strip()
-                        if any(user_ans == possible_ans.strip() for possible_ans in q['acceptable']):
-                            c1 += 1
-                            
-                    tot_q = len(data["p1_write"]) + len(data["p2_write"])
-                    tot_c = c1 + len(data["p2_write"])
-                    sc_100 = (tot_c / tot_q) * 100
-                    
-                    msg = f"🎉 **Kết quả Phần Viết tương đối ({exam_code}):**\n- Số câu đúng Phần 1: **{c1}/{len(data['p1_write'])}** câu\n- Điểm số tương đối: **{sc_100:.1f} / 100 điểm**"
-                    st.success(msg)
-                    send_score_to_gsheet(student_name, exam_code, "PHẦN VIẾT", f"{tot_c}/{tot_q}", sc_100)
-                    
-                    st.markdown("---")
-                    st.markdown("### 🔍 CHI TIẾT CÂU SAI PHẦN VIẾT (PHẦN 1):")
-                    for q in data["p1_write"]:
-                        user_ans = u_w1.get(q['num'], '').strip()
-                        if not any(user_ans == possible_ans.strip() for possible_ans in q['acceptable']):
-                            st.markdown(f"❌ **Câu {q['num']}**: Bạn viết `{u_w1.get(q['num'])}` | Đáp án đúng: **{q['acceptable'][0]}**")
-
+# --- FOOTER ---
 st.markdown("""
 <div class="footer">
     黄宝玉老师
